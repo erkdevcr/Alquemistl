@@ -724,7 +724,8 @@ function renderAll(YEARS) {
   /* ── FUNCIONES DE NAVEGACIÓN ── */
   function updateVisible(idx) {
     document.querySelectorAll('.seg').forEach((s, i) => {
-      s.classList.toggle('hidden', i < idx - 1 || i > idx + 1);
+      /* Activo a la izquierda + solo 1 círculo a la derecha */
+      s.classList.toggle('hidden', i < idx || i > idx + 1);
     });
   }
 
@@ -769,13 +770,9 @@ function renderAll(YEARS) {
 
   segsEl.addEventListener('click', e => {
     const s = e.target.closest('.seg');
-    if (!s) return;
-    const clickedIdx = +s.dataset.yi;
-    if (clickedIdx === aActive) return;
-    /* Círculo izquierdo → retroceder 1; círculo derecho → avanzar 1 */
-    aActivate(clickedIdx < aActive
-      ? Math.max(aActive - 1, 0)
-      : Math.min(aActive + 1, YEARS.length - 1));
+    if (!s || +s.dataset.yi === aActive) return;
+    /* El único círculo visible no-activo es el siguiente → avanzar */
+    aActivate(Math.min(aActive + 1, YEARS.length - 1));
   });
 
   function fActivate(idx) {
