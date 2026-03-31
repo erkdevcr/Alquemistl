@@ -531,10 +531,13 @@ function alertModal(msg) {
 /* ══════════════════════════════════════════
    SAVE
 ══════════════════════════════════════════ */
+const tlChannel = new BroadcastChannel('timeline_updates');
+
 async function saveField(table, id, changes, onSuccess) {
   try {
     await api.patch(table, id, changes);
     toast('Guardado ✓');
+    tlChannel.postMessage({ type: 'data_changed' });
     if (onSuccess) onSuccess();
   } catch(err) {
     toast('Error al guardar');

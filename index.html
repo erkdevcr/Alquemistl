@@ -769,6 +769,9 @@ async function loadData() {
   return YEARS;
 }
 
+/* Estado global preservable entre reloads */
+let _aActive = 0, _fActive = 0, _curV = 'accordion';
+
 /* ══════════════════════════════════════════
    RENDER
 ══════════════════════════════════════════ */
@@ -778,8 +781,8 @@ function renderAll(YEARS) {
   const fcYears  = document.getElementById('fcYears');
   const fcPanes  = document.getElementById('fcPanes');
   const fcProg   = document.getElementById('fcProg');
-  let   aActive  = 0;
-  let   fActive  = 0;
+  let   aActive  = Math.min(_aActive, YEARS.length - 1);
+  let   fActive  = Math.min(_fActive, YEARS.length - 1);
 
   /* ── ACORDEÓN ── */
   YEARS.forEach((y, yi) => {
@@ -938,7 +941,7 @@ function renderAll(YEARS) {
 
   function aActivate(idx) {
     if (idx === aActive) return;
-    aActive = idx;
+    aActive = idx; _aActive = idx;
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
     layoutSegs(idx, true);
     posAccent(idx);
@@ -983,7 +986,7 @@ function renderAll(YEARS) {
     next.classList.add('active');
     requestAnimationFrame(() => requestAnimationFrame(() => { next.style.cssText = ''; }));
     setTimeout(() => { prev.style.cssText = ''; }, 420);
-    fActive = idx;
+    fActive = idx; _fActive = idx;
     fcYears.querySelectorAll('.fc-node').forEach((n,i) => n.classList.toggle('active', i===idx));
     updateFcProg();
   }
@@ -1000,7 +1003,7 @@ function renderAll(YEARS) {
   const vfEl  = document.getElementById('vf');
   const vBtn  = document.getElementById('viewToggle');
   const hint  = document.getElementById('hint');
-  let   curV  = 'accordion';
+  let   curV  = _curV;
 
   const SVG_CARDS    = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="6" height="10" rx=".5"/><rect x="9" y="3" width="6" height="10" rx=".5"/></svg>`;
   const SVG_TIMELINE = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="1" y1="8" x2="15" y2="8"/><circle cx="4" cy="8" r="1.8" fill="currentColor"/><circle cx="8" cy="8" r="1.8" fill="currentColor"/><circle cx="12" cy="8" r="1.8" fill="currentColor"/></svg>`;
@@ -1013,14 +1016,14 @@ function renderAll(YEARS) {
 
   vBtn.addEventListener('click', () => {
     if (curV === 'accordion') {
-      curV = 'fichas';
+      curV = 'fichas'; _curV = 'fichas';
       vaEl.classList.remove('active'); vfEl.classList.add('active');
       setViewBtn('fichas');
       hint.textContent = 'Clic en un año para ver detalle · ← → teclado';
       if (aActive !== fActive) fActivate(aActive);
       updateFcProg();
     } else {
-      curV = 'accordion';
+      curV = 'accordion'; _curV = 'accordion';
       vfEl.classList.remove('active'); vaEl.classList.add('active');
       setViewBtn('accordion');
       hint.textContent = 'Clic en un año para desplegar · ← → teclado';
@@ -1158,8 +1161,28 @@ function renderAll(YEARS) {
 
   /* Ocultar loading */
   const ld = document.getElementById('loading');
-  ld.classList.add('fade-out');
-  setTimeout(() => ld.remove(), 500);
+  if (ld) { ld.classList.add('fade-out'); setTimeout(() => ld?.remove(), 500); }
+
+  /* ── Live reload desde editor (BroadcastChannel) ── */
+  let _reloading = false;
+  async function tlReload() {
+    if (_reloading) return;
+    _reloading = true;
+    try {
+      const YEARS = await loadData();
+      /* Limpiar contenedores antes de re-renderizar */
+      document.getElementById('segs').innerHTML    = '';
+      document.getElementById('fcYears').innerHTML = '';
+      document.getElementById('fcPanes').innerHTML = '';
+      renderAll(YEARS);
+    } catch(e) { console.warn('Live reload error:', e); }
+    finally { _reloading = false; }
+  }
+
+  const tlChannel = new BroadcastChannel('timeline_updates');
+  tlChannel.addEventListener('message', e => {
+    if (e.data?.type === 'data_changed') tlReload();
+  });
 })();
 </script>
 </body>
