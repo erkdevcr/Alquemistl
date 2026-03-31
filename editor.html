@@ -242,6 +242,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
             <option value="">Sin tag</option>
             <option value="new">NEW</option>
             <option value="upd">UPD</option>
+            <option value="urg">URG</option>
           </select>
         </div>
         <div class="form-group">
@@ -511,9 +512,10 @@ function renderLaunches(filterYearId = '') {
           <div class="form-group">
             <label>Tag</label>
             <select data-table="timeline_launches" data-id="${l.id}" data-field="status_tag">
-              <option value="" ${!l.status_tag?'selected':''}>Sin tag</option>
+              <option value="" ${!l.status_tag && !l.is_urgent?'selected':''}>Sin tag</option>
               <option value="new" ${l.status_tag==='new'?'selected':''}>NEW</option>
               <option value="upd" ${l.status_tag==='upd'?'selected':''}>UPD</option>
+              <option value="urg" ${l.is_urgent?'selected':''}>URG</option>
             </select>
           </div>
           <div class="form-group">
@@ -562,7 +564,17 @@ function renderLaunches(filterYearId = '') {
       if (inp.type === 'checkbox') val = inp.checked;
       else if (inp.type === 'number') val = inp.value ? Number(inp.value) : null;
       else val = inp.value || null;
-      markDirty(inp.dataset.table, inp.dataset.id, inp.dataset.field, val);
+
+      /* URG se maneja como is_urgent + status_tag null */
+      if (inp.dataset.field === 'status_tag' && val === 'urg') {
+        markDirty(inp.dataset.table, inp.dataset.id, 'is_urgent', true);
+        markDirty(inp.dataset.table, inp.dataset.id, 'status_tag', null);
+      } else if (inp.dataset.field === 'status_tag') {
+        markDirty(inp.dataset.table, inp.dataset.id, 'is_urgent', false);
+        markDirty(inp.dataset.table, inp.dataset.id, 'status_tag', val);
+      } else {
+        markDirty(inp.dataset.table, inp.dataset.id, inp.dataset.field, val);
+      }
     });
   });
 }
@@ -587,8 +599,8 @@ document.getElementById('btn-save-new-launch').addEventListener('click', async (
     item_count:  document.getElementById('new-item-count').value ? Number(document.getElementById('new-item-count').value) : null,
     launch_date: document.getElementById('new-launch-date').value || null,
     position:    Number(document.getElementById('new-position').value) || 0,
-    status_tag:  document.getElementById('new-status-tag').value || null,
-    is_urgent:   document.getElementById('new-is-urgent').checked,
+    status_tag:  document.getElementById('new-status-tag').value === 'urg' ? null : (document.getElementById('new-status-tag').value || null),
+    is_urgent:   document.getElementById('new-status-tag').value === 'urg' ? true : document.getElementById('new-is-urgent').checked,
     group:       document.getElementById('new-group').value
   };
 
