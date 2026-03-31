@@ -554,7 +554,7 @@ const THB = [14,18,10,16,12,14,18,10];
 async function loadData() {
   /* Fetch paralelo: años + hitos */
   const [years, launches] = await Promise.all([
-    supa('timeline_years?select=*&order=sort_order.asc'),
+    supa('timeline_years?select=*&order=year.asc'),
     supa('timeline_launches?select=*&order=position.asc')
   ]);
 
@@ -802,13 +802,19 @@ function renderAll(YEARS) {
     }
   });
 
-  /* ── THEME ── */
-  let dark = false;
+  /* ── THEME — sincronizado con localStorage ── */
+  let dark = localStorage.getItem('alq-theme') === 'dark';
+  if (dark) {
+    document.documentElement.classList.add('dark');
+    document.getElementById('iMoon').style.display = 'none';
+    document.getElementById('iSun').style.display  = '';
+  }
   document.getElementById('themeToggle').addEventListener('click', () => {
     dark = !dark;
     document.documentElement.classList.toggle('dark', dark);
     document.getElementById('iMoon').style.display = dark ? 'none' : '';
     document.getElementById('iSun').style.display  = dark ? ''     : 'none';
+    localStorage.setItem('alq-theme', dark ? 'dark' : 'light');
   });
 
   /* ── TOUCH ── */

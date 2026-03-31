@@ -102,35 +102,6 @@ select{cursor:pointer;}
 .toggle-row label{text-transform:none;letter-spacing:0;font-size:12px;font-weight:500;color:var(--fg);cursor:pointer;}
 input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg);}
 
-/* ── SAVE BAR ── */
-.save-bar{
-  display:none;
-  position:fixed;bottom:0;left:0;right:0;
-  background:var(--fg);color:var(--bg);
-  padding:12px 32px;
-  display:flex;align-items:center;justify-content:space-between;
-  z-index:100;
-  transform:translateY(100%);
-  transition:transform .3s cubic-bezier(.4,0,.2,1);
-}
-.save-bar.visible{transform:translateY(0);}
-.save-bar-msg{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
-.save-bar-btns{display:flex;gap:8px;}
-.btn-save{
-  padding:7px 18px;background:var(--bg);color:var(--fg);
-  border:none;font-family:var(--font);font-size:11px;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
-  transition:opacity .2s;
-}
-.btn-save:hover{opacity:.7;}
-.btn-discard{
-  padding:7px 14px;background:none;color:var(--bg);
-  border:1.5px solid rgba(255,255,255,.3);font-family:var(--font);
-  font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-  cursor:pointer;transition:border-color .2s;
-}
-.btn-discard:hover{border-color:rgba(255,255,255,.7);}
-
 /* ── TOAST ── */
 .toast{
   position:fixed;top:20px;right:20px;
@@ -154,7 +125,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 /* ── LOADING ── */
 .loading{text-align:center;padding:40px;color:var(--g60);font-size:12px;letter-spacing:.1em;text-transform:uppercase;}
 
-/* ── YEAR PILL ── */
+/* ── YEAR PILL (inline badge) ── */
 .year-pill{
   display:inline-block;padding:2px 8px;
   background:var(--g10);border:1px solid var(--g20);
@@ -170,6 +141,32 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 .badge-new{background:#000;color:#fff;}
 .badge-upd{background:var(--g20);color:var(--g90);}
 .badge-urg{background:#cc2200;color:#fff;}
+
+/* ── YEAR FILTER BAR ── */
+.year-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.ypill{
+  display:inline-flex;align-items:center;
+  padding:5px 16px;border:1.5px solid var(--g20);background:none;
+  font-family:var(--font);font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--g60);
+  cursor:pointer;transition:all .15s;
+}
+.ypill:hover{border-color:var(--fg);color:var(--fg);}
+.ypill.active{background:var(--fg);color:var(--bg);border-color:var(--fg);}
+
+/* ── CONFIRM MODAL ── */
+.modal-bg{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.5);z-index:400;
+  align-items:center;justify-content:center;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:var(--bg);border:1.5px solid var(--g20);
+  padding:28px 32px;max-width:380px;width:90%;
+}
+.modal-msg{font-size:13px;font-weight:500;line-height:1.55;margin-bottom:22px;color:var(--fg);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
 </style>
 </head>
 <body>
@@ -200,7 +197,32 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 
   <!-- TAB: AÑOS -->
   <div id="tab-years">
-    <div class="section-label">5 años · Editar datos de cada año</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="section-label" id="years-label">Años</div>
+      <button class="btn btn-accent" id="btn-add-year">+ Nuevo año</button>
+    </div>
+
+    <!-- Formulario nuevo año -->
+    <div class="add-section" id="add-year-form">
+      <div class="add-title">Nuevo año</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Año</label>
+          <input type="number" id="new-year-num" placeholder="Ej: 2031" min="2020" max="2099">
+        </div>
+        <div class="form-group">
+          <div class="toggle-row" style="margin-top:20px;">
+            <input type="checkbox" id="new-year-current">
+            <label for="new-year-current">Marcar como año actual</label>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-accent" id="btn-save-new-year">Crear año</button>
+        <button class="btn" id="btn-cancel-new-year">Cancelar</button>
+      </div>
+    </div>
+
     <div id="years-list"><div class="loading">Cargando...</div></div>
   </div>
 
@@ -211,13 +233,14 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
       <button class="btn btn-accent" id="btn-add-launch">+ Nuevo hito</button>
     </div>
 
-    <!-- Filtro por año + buscador -->
-    <div style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <label style="font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--g60);">Año:</label>
-      <select id="filter-year" style="width:120px;">
-        <option value="">Todos</option>
-      </select>
-      <input type="text" id="search-launch" placeholder="Buscar hito..." style="flex:1;min-width:160px;">
+    <!-- Barra de filtro por año -->
+    <div class="year-bar" id="year-bar">
+      <button class="ypill active" data-id="">Todos</button>
+    </div>
+
+    <!-- Buscador -->
+    <div style="margin-bottom:16px;">
+      <input type="text" id="search-launch" placeholder="Buscar hito..." style="width:100%;">
     </div>
 
     <!-- Formulario nuevo hito -->
@@ -267,6 +290,17 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- CONFIRM MODAL -->
+<div class="modal-bg" id="confirmModal">
+  <div class="modal">
+    <div class="modal-msg" id="confirmMsg"></div>
+    <div class="modal-btns">
+      <button class="btn" id="confirmCancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirmOk">Eliminar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ══════════════════════════════════════════
    CONFIG
@@ -282,13 +316,13 @@ const HEADERS = {
 };
 
 const api = {
-  get: (table, query='') =>
+  get:    (table, query='') =>
     fetch(`${SUPA_URL}/rest/v1/${table}?${query}`, { headers: HEADERS }).then(r => r.json()),
-  patch: (table, id, body) =>
+  patch:  (table, id, body) =>
     fetch(`${SUPA_URL}/rest/v1/${table}?id=eq.${id}`, {
       method:'PATCH', headers: HEADERS, body: JSON.stringify(body)
     }).then(r => r.json()),
-  post: (table, body) =>
+  post:   (table, body) =>
     fetch(`${SUPA_URL}/rest/v1/${table}`, {
       method:'POST', headers: HEADERS, body: JSON.stringify(body)
     }).then(r => r.json()),
@@ -315,7 +349,32 @@ function toast(msg) {
 }
 
 /* ══════════════════════════════════════════
-   SAVE BAR
+   CONFIRM MODAL (reemplaza confirm() nativo)
+══════════════════════════════════════════ */
+function confirmModal(msg) {
+  return new Promise(resolve => {
+    document.getElementById('confirmMsg').textContent = msg;
+    const bg  = document.getElementById('confirmModal');
+    const ok  = document.getElementById('confirmOk');
+    const no  = document.getElementById('confirmCancel');
+    bg.classList.add('open');
+
+    const finish = val => {
+      bg.classList.remove('open');
+      ok.removeEventListener('click', onOk);
+      no.removeEventListener('click', onNo);
+      resolve(val);
+    };
+    const onOk = () => finish(true);
+    const onNo = () => finish(false);
+    ok.addEventListener('click', onOk);
+    no.addEventListener('click', onNo);
+    bg.addEventListener('click', e => { if (e.target === bg) finish(false); }, { once: true });
+  });
+}
+
+/* ══════════════════════════════════════════
+   SAVE
 ══════════════════════════════════════════ */
 async function saveField(table, id, changes, onSuccess) {
   try {
@@ -339,9 +398,9 @@ function fmtDate(d) {
 }
 
 function tagBadge(row) {
-  if (row.is_urgent)   return `<span class="badge badge-urg">URG</span>`;
-  if (row.status_tag === 'new') return `<span class="badge badge-new">NEW</span>`;
-  if (row.status_tag === 'upd') return `<span class="badge badge-upd">UPD</span>`;
+  if (row.is_urgent)             return `<span class="badge badge-urg">URG</span>`;
+  if (row.status_tag === 'new')  return `<span class="badge badge-new">NEW</span>`;
+  if (row.status_tag === 'upd')  return `<span class="badge badge-upd">UPD</span>`;
   return '';
 }
 
@@ -351,6 +410,8 @@ function tagBadge(row) {
 function renderYears() {
   const el = document.getElementById('years-list');
   el.innerHTML = '';
+  document.getElementById('years-label').textContent =
+    `${years.length} año${years.length !== 1 ? 's' : ''} · Editar datos`;
 
   years.forEach(y => {
     const card = document.createElement('div');
@@ -381,11 +442,7 @@ function renderYears() {
           </div>
           <div class="form-group">
             <label>Mercado (market pill)</label>
-            <input type="text" value="${y.market||''}" data-table="timeline_years" data-id="${y.id}" data-field="market" placeholder="Ej: Ecuador">
-          </div>
-          <div class="form-group">
-            <label>Sort order</label>
-            <input type="number" value="${y.sort_order}" data-table="timeline_years" data-id="${y.id}" data-field="sort_order">
+            <input type="text" value="${y.market||''}" data-table="timeline_years" data-id="${y.id}" data-field="market" placeholder="Ej: Ecuador  o  Uruguay\nArgentina">
           </div>
           <div class="form-group">
             <div class="toggle-row">
@@ -397,7 +454,6 @@ function renderYears() {
       </div>`;
     el.appendChild(card);
 
-    /* toggle */
     card.querySelector('.card-header').addEventListener('click', () => {
       const body = document.getElementById(`year-body-${y.id}`);
       const chev = card.querySelector('.chevron');
@@ -408,11 +464,11 @@ function renderYears() {
     });
   });
 
-  /* inputs años — guardan al perder foco o al cambiar */
   el.querySelectorAll('input[data-field]').forEach(inp => {
     const ev = inp.type === 'checkbox' ? 'change' : 'blur';
     inp.addEventListener(ev, () => {
-      const val = inp.type === 'checkbox' ? inp.checked : (inp.type === 'number' ? Number(inp.value) : inp.value || null);
+      const val = inp.type === 'checkbox' ? inp.checked
+                : (inp.type === 'number'  ? Number(inp.value) : inp.value || null);
       saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val });
     });
   });
@@ -422,7 +478,7 @@ function renderYears() {
    RENDER HITOS
 ══════════════════════════════════════════ */
 function renderLaunches(filterYearId = '', searchText = '') {
-  const el  = document.getElementById('launches-list');
+  const el   = document.getElementById('launches-list');
   const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'');
   const q    = norm(searchText.trim());
   let data   = filterYearId
@@ -437,7 +493,7 @@ function renderLaunches(filterYearId = '', searchText = '') {
   el.innerHTML = '';
 
   data.forEach(l => {
-    const y = years.find(y => y.id === l.year_id);
+    const y    = years.find(y => y.id === l.year_id);
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -493,7 +549,7 @@ function renderLaunches(filterYearId = '', searchText = '') {
       </div>`;
     el.appendChild(card);
 
-    /* toggle */
+    /* toggle — ignora clicks en botones de acción */
     card.querySelector('.card-header').addEventListener('click', e => {
       if (e.target.closest('.btn-del') || e.target.closest('.btn-move')) return;
       const body = document.getElementById(`launch-body-${l.id}`);
@@ -508,15 +564,13 @@ function renderLaunches(filterYearId = '', searchText = '') {
     card.querySelectorAll('.btn-move').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation();
-        const dir    = btn.dataset.dir;
-        /* Todos los hitos del mismo año, ordenados por position luego id */
-        const group  = launches
+        const dir   = btn.dataset.dir;
+        const group = launches
           .filter(x => x.year_id === l.year_id)
           .sort((a, b) => (a.position - b.position) || (a.id - b.id));
-        const ci     = group.findIndex(x => x.id === l.id);
-        const si     = dir === 'up' ? ci - 1 : ci + 1;
+        const ci    = group.findIndex(x => x.id === l.id);
+        const si    = dir === 'up' ? ci - 1 : ci + 1;
         if (si < 0 || si >= group.length) return;
-        /* Intercambiar y reasignar posiciones 0,1,2... */
         [group[ci], group[si]] = [group[si], group[ci]];
         await Promise.all(
           group.map((item, idx) =>
@@ -528,18 +582,18 @@ function renderLaunches(filterYearId = '', searchText = '') {
       });
     });
 
-    /* eliminar */
+    /* eliminar con modal propio */
     card.querySelector('.btn-del').addEventListener('click', async e => {
       e.stopPropagation();
-      if (!confirm(`¿Eliminar "${l.name}"?`)) return;
+      const ok = await confirmModal(`¿Eliminar "${l.name}"? Esta acción no se puede deshacer.`);
+      if (!ok) return;
       await api.delete('timeline_launches', l.id);
       toast('Hito eliminado');
       loadAll();
     });
   });
 
-  /* inputs */
-  /* inputs hitos — selects guardan al cambiar, textos al perder foco */
+  /* inputs hitos */
   el.querySelectorAll('[data-field]').forEach(inp => {
     const ev = inp.tagName === 'SELECT' ? 'change' : (inp.type === 'checkbox' ? 'change' : 'blur');
     inp.addEventListener(ev, () => {
@@ -548,27 +602,20 @@ function renderLaunches(filterYearId = '', searchText = '') {
       else if (inp.type === 'number') val = inp.value ? Number(inp.value) : null;
       else val = inp.value || null;
 
-      /* year_id change — recargar lista para reflejar nuevo año */
       if (inp.dataset.field === 'year_id' || inp.dataset.field === 'launch_date') {
         saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val }, () => loadAll());
       } else if (inp.dataset.field === 'status_tag') {
-        const isUrg = val === 'urg';
+        const isUrg   = val === 'urg';
         const changes = isUrg
           ? { is_urgent: true,  status_tag: null }
           : { is_urgent: false, status_tag: val  };
-
-        /* actualizar badge en header de la card inmediatamente */
         const card    = inp.closest('.card');
         const titleEl = card ? card.querySelector('.card-title') : null;
         if (titleEl) {
-          /* quitar badge anterior */
           titleEl.querySelectorAll('.badge').forEach(b => b.remove());
-          /* insertar nuevo */
-          const fakeRow = { is_urgent: isUrg, status_tag: isUrg ? null : val };
-          const badge   = tagBadge(fakeRow);
+          const badge = tagBadge({ is_urgent: isUrg, status_tag: isUrg ? null : val });
           if (badge) titleEl.insertAdjacentHTML('beforeend', badge);
         }
-
         saveField(inp.dataset.table, inp.dataset.id, changes);
       } else {
         saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val });
@@ -605,10 +652,31 @@ document.getElementById('btn-save-new-launch').addEventListener('click', async (
   await api.post('timeline_launches', body);
   toast('Hito creado ✓');
   document.getElementById('add-launch-form').classList.remove('open');
-  document.getElementById('new-name').value = '';
-  document.getElementById('new-detail').value = '';
-  document.getElementById('new-item-count').value = '';
-  document.getElementById('new-launch-date').value = '';
+  ['new-name','new-detail','new-item-count','new-launch-date'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  loadAll();
+});
+
+/* ══════════════════════════════════════════
+   NUEVO AÑO
+══════════════════════════════════════════ */
+document.getElementById('btn-add-year').addEventListener('click', () => {
+  document.getElementById('add-year-form').classList.toggle('open');
+});
+document.getElementById('btn-cancel-new-year').addEventListener('click', () => {
+  document.getElementById('add-year-form').classList.remove('open');
+});
+document.getElementById('btn-save-new-year').addEventListener('click', async () => {
+  const yr = parseInt(document.getElementById('new-year-num').value, 10);
+  if (!yr || yr < 2020 || yr > 2099) { toast('Introduce un año válido (2020–2099)'); return; }
+  if (years.find(y => y.year === yr)) { toast('Ese año ya existe'); return; }
+  const isCur = document.getElementById('new-year-current').checked;
+  await api.post('timeline_years', { year: yr, is_current: isCur });
+  toast(`Año ${yr} creado ✓`);
+  document.getElementById('add-year-form').classList.remove('open');
+  document.getElementById('new-year-num').value = '';
+  document.getElementById('new-year-current').checked = false;
   loadAll();
 });
 
@@ -619,27 +687,15 @@ document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    document.getElementById('tab-years').style.display   = tab.dataset.tab === 'years'   ? '' : 'none';
+    document.getElementById('tab-years').style.display    = tab.dataset.tab === 'years'   ? '' : 'none';
     document.getElementById('tab-launches').style.display = tab.dataset.tab === 'launches' ? '' : 'none';
   });
 });
 
-/* Filtro año */
-function getFilters() {
-  return {
-    year:   document.getElementById('filter-year').value,
-    search: document.getElementById('search-launch').value
-  };
-}
-
-document.getElementById('filter-year').addEventListener('change', () => {
-  const f = getFilters();
-  renderLaunches(f.year, f.search);
-});
-
+/* Buscador */
 document.getElementById('search-launch').addEventListener('input', () => {
-  const f = getFilters();
-  renderLaunches(f.year, f.search);
+  const activeYr = document.querySelector('#year-bar .ypill.active')?.dataset.id ?? '';
+  renderLaunches(activeYr, document.getElementById('search-launch').value);
 });
 
 /* ══════════════════════════════════════════
@@ -647,32 +703,54 @@ document.getElementById('search-launch').addEventListener('input', () => {
 ══════════════════════════════════════════ */
 async function loadAll() {
   [years, launches] = await Promise.all([
-    api.get('timeline_years', 'select=*&order=sort_order.asc'),
-    api.get('timeline_launches', 'select=*&order=year_id.asc,position.asc,id.asc')
+    api.get('timeline_years',   'select=*&order=year.asc'),
+    api.get('timeline_launches','select=*&order=year_id.asc,position.asc,id.asc')
   ]);
 
-  /* Poblar selects de años */
-  const filterSel  = document.getElementById('filter-year');
-  const filterVal  = filterSel.value;
-  filterSel.innerHTML = '<option value="">Todos</option>' +
-    years.map(y => `<option value="${y.id}" ${y.id == filterVal ? 'selected':''}>${y.year}</option>`).join('');
+  /* Guardar filtro activo actual */
+  const activeYrId = document.querySelector('#year-bar .ypill.active')?.dataset.id ?? '';
 
+  /* Poblar barra de año */
+  const bar = document.getElementById('year-bar');
+  bar.innerHTML =
+    `<button class="ypill${!activeYrId?' active':''}" data-id="">Todos</button>` +
+    years.map(y =>
+      `<button class="ypill${String(y.id)===activeYrId?' active':''}" data-id="${y.id}">${y.year}</button>`
+    ).join('');
+
+  bar.querySelectorAll('.ypill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      bar.querySelectorAll('.ypill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      renderLaunches(pill.dataset.id, document.getElementById('search-launch').value);
+    });
+  });
+
+  /* Select de nuevo hito */
   const newYearSel = document.getElementById('new-year-id');
   newYearSel.innerHTML = years.map(y => `<option value="${y.id}">${y.year}</option>`).join('');
 
   renderYears();
-  renderLaunches(filterSel.value);
+  renderLaunches(activeYrId, document.getElementById('search-launch').value);
 }
 
 loadAll();
 
-/* ── THEME ── */
-let dark = false;
+/* ══════════════════════════════════════════
+   TEMA — sincronizado con localStorage
+══════════════════════════════════════════ */
+let dark = localStorage.getItem('alq-theme') === 'dark';
+if (dark) {
+  document.documentElement.classList.add('dark');
+  document.getElementById('iMoon').style.display = 'none';
+  document.getElementById('iSun').style.display  = '';
+}
 document.getElementById('themeToggle').addEventListener('click', () => {
   dark = !dark;
   document.documentElement.classList.toggle('dark', dark);
   document.getElementById('iMoon').style.display = dark ? 'none' : '';
   document.getElementById('iSun').style.display  = dark ? ''     : 'none';
+  localStorage.setItem('alq-theme', dark ? 'dark' : 'light');
 });
 </script>
 </body>
