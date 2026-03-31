@@ -423,12 +423,11 @@ html.dark #loading {
 .hint   { font-size:clamp(7px,.875vw,20px); color:var(--fg); letter-spacing:.06em; font-weight:500; }
 
 @media (prefers-reduced-motion:reduce) {
-  .circle-inner.current, .fc-circ.current, .tag-urg, .lsw { animation:none; }
+  .circle-inner.current, .fc-circ.current { animation:none; }
 }
-@media (hover:none) {
-  /* En dispositivos táctiles (móvil/tablet) no hay blink — distrae y drena batería */
-  .tag-urg, .lsw { animation:none !important; }
-}
+/* tag URG y bolita del footer siempre parpadean, ignorando prefers-reduced-motion */
+.tag-urg { animation:blink 1.8s ease-in-out infinite !important; }
+.lsw[id="tl-lsw-urg"] { animation:blink 1.8s ease-in-out infinite !important; }
 
 @media (max-width: 640px) {
   .header { padding:10px 16px; gap:8px; }
