@@ -227,7 +227,31 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
   <div id="tab-years">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <div class="section-label" id="years-label">Años</div>
-      <button class="btn btn-accent" id="btn-add-year">+ Nuevo año</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn" id="btn-recalc-items" title="Recalcular items acumulados por año">⟳ Recalcular items</button>
+        <button class="btn btn-accent" id="btn-add-year">+ Nuevo año</button>
+      </div>
+    </div>
+
+    <!-- Formulario recálculo de items -->
+    <div class="add-section" id="recalc-form">
+      <div class="add-title">Recalcular items acumulados</div>
+      <p style="font-size:11px;color:var(--g60);margin-bottom:12px;line-height:1.5;">
+        Ingresa el número de items <strong>existentes antes del primer año</strong>.<br>
+        Cada año sumará los items de sus hitos de forma acumulada.
+      </p>
+      <div class="form-grid" style="grid-template-columns:1fr;">
+        <div class="form-group">
+          <label>Items base (antes del primer año)</label>
+          <input type="number" id="recalc-base" placeholder="Ej: 148" min="0">
+        </div>
+      </div>
+      <!-- Preview del cálculo -->
+      <div id="recalc-preview" style="margin-top:12px;font-size:11px;color:var(--g60);line-height:1.8;"></div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn btn-accent" id="btn-save-recalc">Aplicar</button>
+        <button class="btn" id="btn-cancel-recalc">Cancelar</button>
+      </div>
     </div>
 
     <!-- Formulario nuevo año -->
@@ -877,6 +901,59 @@ document.getElementById('btn-save-new-year').addEventListener('click', async () 
   document.getElementById('add-year-form').classList.remove('open');
   document.getElementById('new-year-num').value = '';
   document.getElementById('new-year-current').checked = false;
+  loadAll();
+});
+
+/* ══════════════════════════════════════════
+   RECALCULAR ITEMS ACUMULADOS
+══════════════════════════════════════════ */
+document.getElementById('btn-recalc-items').addEventListener('click', () => {
+  document.getElementById('recalc-form').classList.toggle('open');
+  updateRecalcPreview();
+});
+document.getElementById('btn-cancel-recalc').addEventListener('click', () => {
+  document.getElementById('recalc-form').classList.remove('open');
+});
+
+function calcAccumulated(base) {
+  /* Años ordenados ascendente */
+  const sorted = [...years].sort((a, b) => a.year - b.year);
+  let running = base;
+  return sorted.map(y => {
+    const sumHitos = launches
+      .filter(l => l.year_id === y.id)
+      .reduce((acc, l) => acc + (l.item_count || 0), 0);
+    const prev = running;
+    running += sumHitos;
+    return { y, prev, sumHitos, total: running };
+  });
+}
+
+function updateRecalcPreview() {
+  const base = parseInt(document.getElementById('recalc-base').value, 10) || 0;
+  const rows  = calcAccumulated(base);
+  const prev  = document.getElementById('recalc-preview');
+  if (!rows.length) { prev.textContent = ''; return; }
+  prev.innerHTML = '<strong style="color:var(--fg)">Vista previa:</strong><br>' +
+    rows.map(r =>
+      `${r.y.year}: ${r.prev} + ${r.sumHitos} nuevos = <strong style="color:var(--fg)">${r.total} items</strong>`
+    ).join('<br>');
+}
+
+document.getElementById('recalc-base').addEventListener('input', updateRecalcPreview);
+
+document.getElementById('btn-save-recalc').addEventListener('click', async () => {
+  const base = parseInt(document.getElementById('recalc-base').value, 10);
+  if (isNaN(base) || base < 0) { toast('Ingresa un número base válido'); return; }
+  const rows = calcAccumulated(base);
+  await Promise.all(rows.map(r =>
+    api.patch('timeline_years', r.y.id, {
+      items_label: String(r.total),
+      items_calc:  r.sumHitos > 0 ? `${r.prev} + ${r.sumHitos} nuevos` : String(r.total)
+    })
+  ));
+  toast('Items recalculados ✓');
+  document.getElementById('recalc-form').classList.remove('open');
   loadAll();
 });
 
