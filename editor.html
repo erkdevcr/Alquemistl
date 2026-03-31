@@ -74,11 +74,21 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
   padding:12px 16px;cursor:pointer;
   border-bottom:1px solid transparent;
   transition:border-color .2s;
+  gap:8px;
 }
 .card-header.open{border-bottom-color:var(--g20);}
-.card-title{font-size:13px;font-weight:600;}
-.card-meta{font-size:10px;color:var(--g60);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-@media(max-width:480px){.card-meta{white-space:normal;text-overflow:clip;}}
+/* contenedor izquierdo: title + meta en fila, envuelve solo si no cabe */
+.card-header > div:first-child{
+  display:flex;align-items:baseline;gap:10px;
+  min-width:0;flex:1;overflow:hidden;
+}
+.card-title{font-size:13px;font-weight:600;white-space:nowrap;}
+.card-meta{font-size:10px;color:var(--g60);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
+/* en pantalla pequeña se permite apilar */
+@media(max-width:520px){
+  .card-header > div:first-child{flex-wrap:wrap;gap:2px 6px;}
+  .card-title,.card-meta{white-space:normal;}
+}
 .card-actions{display:flex;gap:6px;align-items:center;}
 .btn-del-year{
   background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;
