@@ -483,9 +483,9 @@ html.dark #loading {
 <!-- ══════ FOOTER ══════ -->
 <footer class="footer">
   <div class="legend">
-    <div class="li"><div class="lsw" style="background:var(--fg)"></div><span id="tl-leg-new">NEW — Nuevo vs. plan original</span></div>
-    <div class="li"><div class="lsw" style="background:var(--g20);border:1px solid var(--g40)"></div><span id="tl-leg-upd">UPD — Detalle actualizado</span></div>
-    <div class="li"><div class="lsw" style="background:#cc2200;animation:blink 1.8s ease-in-out infinite"></div><span id="tl-leg-urg">URG — Urgente en board</span></div>
+    <div class="li"><div class="lsw" id="tl-lsw-new" style="background:var(--fg)"></div><span id="tl-leg-new">NEW — Nuevo vs. plan original</span></div>
+    <div class="li"><div class="lsw" id="tl-lsw-upd" style="background:var(--g20);border:1px solid var(--g40)"></div><span id="tl-leg-upd">UPD — Detalle actualizado</span></div>
+    <div class="li"><div class="lsw" id="tl-lsw-urg" style="background:#cc2200;animation:blink 1.8s ease-in-out infinite"></div><span id="tl-leg-urg">URG — Urgente en board</span></div>
   </div>
   <div class="hint" id="hint">Clic en un año para desplegar &nbsp;·&nbsp; ← → teclado</div>
 </footer>
@@ -497,10 +497,16 @@ html.dark #loading {
   var legNew  = ls.getItem('tl_leg_new');
   var legUpd  = ls.getItem('tl_leg_upd');
   var legUrg  = ls.getItem('tl_leg_urg');
+  var colNew  = ls.getItem('tl_col_new');
+  var colUpd  = ls.getItem('tl_col_upd');
+  var colUrg  = ls.getItem('tl_col_urg');
   if(badge)  document.getElementById('tl-badge').textContent    = badge;
   if(legNew) document.getElementById('tl-leg-new').textContent  = legNew;
   if(legUpd) document.getElementById('tl-leg-upd').textContent  = legUpd;
   if(legUrg) document.getElementById('tl-leg-urg').textContent  = legUrg;
+  if(colNew) document.getElementById('tl-lsw-new').style.background = colNew;
+  if(colUpd){ var u=document.getElementById('tl-lsw-upd'); u.style.background=colUpd; u.style.border='none'; }
+  if(colUrg) document.getElementById('tl-lsw-urg').style.background = colUrg;
 })();
 </script>
 

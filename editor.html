@@ -310,15 +310,24 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
       <div class="form-grid" style="grid-template-columns:1fr;">
         <div class="form-group">
           <label>Etiqueta NEW</label>
-          <input type="text" id="cfg-leg-new" placeholder="Ej: NEW — Nuevo vs. plan original">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="cfg-leg-new" placeholder="Ej: NEW — Nuevo vs. plan original" style="flex:1;min-width:0;">
+            <input type="color" id="cfg-col-new" title="Color de la bolita NEW" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+          </div>
         </div>
         <div class="form-group">
           <label>Etiqueta UPD</label>
-          <input type="text" id="cfg-leg-upd" placeholder="Ej: UPD — Detalle actualizado">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="cfg-leg-upd" placeholder="Ej: UPD — Detalle actualizado" style="flex:1;min-width:0;">
+            <input type="color" id="cfg-col-upd" title="Color de la bolita UPD" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+          </div>
         </div>
         <div class="form-group">
           <label>Etiqueta URG</label>
-          <input type="text" id="cfg-leg-urg" placeholder="Ej: URG — Urgente en board">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="cfg-leg-urg" placeholder="Ej: URG — Urgente en board" style="flex:1;min-width:0;">
+            <input type="color" id="cfg-col-urg" title="Color de la bolita URG" style="width:38px;height:34px;padding:2px 3px;border-radius:6px;cursor:pointer;flex-shrink:0;">
+          </div>
         </div>
       </div>
 
@@ -1029,6 +1038,10 @@ document.getElementById('search-launch').addEventListener('input', () => {
   document.getElementById('cfg-leg-new').value  = ls.getItem('tl_leg_new') || 'NEW — Nuevo vs. plan original';
   document.getElementById('cfg-leg-upd').value  = ls.getItem('tl_leg_upd') || 'UPD — Detalle actualizado';
   document.getElementById('cfg-leg-urg').value  = ls.getItem('tl_leg_urg') || 'URG — Urgente en board';
+  /* colores — defaults: NEW=#111111, UPD=#888888, URG=#cc2200 */
+  document.getElementById('cfg-col-new').value  = ls.getItem('tl_col_new') || '#111111';
+  document.getElementById('cfg-col-upd').value  = ls.getItem('tl_col_upd') || '#888888';
+  document.getElementById('cfg-col-urg').value  = ls.getItem('tl_col_urg') || '#cc2200';
 })();
 
 document.getElementById('btn-save-config').addEventListener('click', () => {
@@ -1039,6 +1052,9 @@ document.getElementById('btn-save-config').addEventListener('click', () => {
   ls.setItem('tl_leg_new', document.getElementById('cfg-leg-new').value.trim() || 'NEW — Nuevo vs. plan original');
   ls.setItem('tl_leg_upd', document.getElementById('cfg-leg-upd').value.trim() || 'UPD — Detalle actualizado');
   ls.setItem('tl_leg_urg', document.getElementById('cfg-leg-urg').value.trim() || 'URG — Urgente en board');
+  ls.setItem('tl_col_new', document.getElementById('cfg-col-new').value);
+  ls.setItem('tl_col_upd', document.getElementById('cfg-col-upd').value);
+  ls.setItem('tl_col_urg', document.getElementById('cfg-col-urg').value);
   toast('Configuración guardada ✓');
 });
 
