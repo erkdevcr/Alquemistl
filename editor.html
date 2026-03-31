@@ -297,8 +297,33 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
           <input type="text" id="cfg-title2" placeholder="Ej: Quinquenio Joyas">
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="btn btn-accent" id="btn-save-config">Guardar título</button>
+
+      <div class="add-title" style="margin-top:20px;">Badge de actualización</div>
+      <div class="form-grid" style="grid-template-columns:1fr;">
+        <div class="form-group">
+          <label>Texto del badge (header)</label>
+          <input type="text" id="cfg-badge" placeholder="Ej: Actualizada Mar 2026 · Fuente: Board KL">
+        </div>
+      </div>
+
+      <div class="add-title" style="margin-top:20px;">Nomenclatura del footer</div>
+      <div class="form-grid" style="grid-template-columns:1fr;">
+        <div class="form-group">
+          <label>Etiqueta NEW</label>
+          <input type="text" id="cfg-leg-new" placeholder="Ej: NEW — Nuevo vs. plan original">
+        </div>
+        <div class="form-group">
+          <label>Etiqueta UPD</label>
+          <input type="text" id="cfg-leg-upd" placeholder="Ej: UPD — Detalle actualizado">
+        </div>
+        <div class="form-group">
+          <label>Etiqueta URG</label>
+          <input type="text" id="cfg-leg-urg" placeholder="Ej: URG — Urgente en board">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button class="btn btn-accent" id="btn-save-config">Guardar configuración</button>
       </div>
     </div>
   </div>
@@ -997,18 +1022,24 @@ document.getElementById('search-launch').addEventListener('input', () => {
    CONFIGURACIÓN — título
 ══════════════════════════════════════════ */
 (function initConfig() {
-  const i1 = document.getElementById('cfg-title1');
-  const i2 = document.getElementById('cfg-title2');
-  i1.value = localStorage.getItem('tl_title1') || 'Línea del Tiempo';
-  i2.value = localStorage.getItem('tl_title2') || 'Quinquenio Joyas';
+  const ls = localStorage;
+  document.getElementById('cfg-title1').value   = ls.getItem('tl_title1')  || 'Línea del Tiempo';
+  document.getElementById('cfg-title2').value   = ls.getItem('tl_title2')  || 'Quinquenio Joyas';
+  document.getElementById('cfg-badge').value    = ls.getItem('tl_badge')   || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL';
+  document.getElementById('cfg-leg-new').value  = ls.getItem('tl_leg_new') || 'NEW — Nuevo vs. plan original';
+  document.getElementById('cfg-leg-upd').value  = ls.getItem('tl_leg_upd') || 'UPD — Detalle actualizado';
+  document.getElementById('cfg-leg-urg').value  = ls.getItem('tl_leg_urg') || 'URG — Urgente en board';
 })();
 
 document.getElementById('btn-save-config').addEventListener('click', () => {
-  const t1 = document.getElementById('cfg-title1').value.trim() || 'Línea del Tiempo';
-  const t2 = document.getElementById('cfg-title2').value.trim() || 'Quinquenio Joyas';
-  localStorage.setItem('tl_title1', t1);
-  localStorage.setItem('tl_title2', t2);
-  toast('Título guardado ✓');
+  const ls = localStorage;
+  ls.setItem('tl_title1',  document.getElementById('cfg-title1').value.trim()  || 'Línea del Tiempo');
+  ls.setItem('tl_title2',  document.getElementById('cfg-title2').value.trim()  || 'Quinquenio Joyas');
+  ls.setItem('tl_badge',   document.getElementById('cfg-badge').value.trim()   || 'Actualizada Mar 2026 · Fuente: Board Lanzamientos KL');
+  ls.setItem('tl_leg_new', document.getElementById('cfg-leg-new').value.trim() || 'NEW — Nuevo vs. plan original');
+  ls.setItem('tl_leg_upd', document.getElementById('cfg-leg-upd').value.trim() || 'UPD — Detalle actualizado');
+  ls.setItem('tl_leg_urg', document.getElementById('cfg-leg-urg').value.trim() || 'URG — Urgente en board');
+  toast('Configuración guardada ✓');
 });
 
 /* ══════════════════════════════════════════
