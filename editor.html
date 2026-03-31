@@ -131,15 +131,16 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 
 /* ── TOAST ── */
 .toast{
-  position:fixed;top:20px;right:20px;
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(.92);
   background:var(--fg);color:var(--bg);
-  padding:10px 18px;font-size:11px;font-weight:600;
+  padding:14px 28px;font-size:12px;font-weight:600;
   letter-spacing:.08em;text-transform:uppercase;
-  opacity:0;transform:translateY(-8px);
-  transition:opacity .3s,transform .3s;
-  pointer-events:none;z-index:200;
+  border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,.22);
+  opacity:0;transition:opacity .25s,transform .25s;
+  pointer-events:none;z-index:9999;white-space:nowrap;
 }
-.toast.show{opacity:1;transform:translateY(0);}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
 
 /* ── ADD FORM ── */
 .add-section{
