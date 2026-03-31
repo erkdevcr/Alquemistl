@@ -2,7 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" id="metaTheme" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>if(localStorage.getItem('alq-theme')==='dark'){document.documentElement.classList.add('dark');document.querySelector('#metaTheme')&&(document.querySelector('#metaTheme').content='#111c26');}</script>
 <title>Editor — Línea del Tiempo</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M10 4h12v1l-5 7-1 1-1-1-5-7V4zm0 24h12v-1l-5-7-1-1-1 1-5 7v1zm1-1h10l-4-5.5-.5-.7-.5.7L11 27zm1-22l4 5.5.5.7.5-.7L21 5H11z' fill='%23fff'/%3E%3Crect x='9' y='4' width='14' height='1.5' fill='%23fff'/%3E%3Crect x='9' y='26.5' width='14' height='1.5' fill='%23fff'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,8 +22,10 @@ html.dark {
   --g10:#1a2c3a; --g20:#2e4455; --g40:#627a8e; --g60:#8aacbe; --g90:#c8dce8;
   --accent:#4d9fff;
 }
+html { background: var(--g10); }
+html.dark { background: #000; color-scheme: dark; }
 html.dark body { background: linear-gradient(rgb(0,0,0) 0%, rgb(26,32,40) 50%, rgb(41,56,69) 100%) fixed; }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:100vh;}
 
 /* ── HEADER ── */
@@ -852,11 +857,17 @@ if (dark) {
   document.getElementById('iMoon').style.display = 'none';
   document.getElementById('iSun').style.display  = '';
 }
+const metaTheme = document.getElementById('metaTheme');
+function applyTheme(isDark) {
+  document.documentElement.classList.toggle('dark', isDark);
+  document.getElementById('iMoon').style.display = isDark ? 'none' : '';
+  document.getElementById('iSun').style.display  = isDark ? ''     : 'none';
+  if (metaTheme) metaTheme.content = isDark ? '#111c26' : '#ffffff';
+}
+if (dark) applyTheme(true);
 document.getElementById('themeToggle').addEventListener('click', () => {
   dark = !dark;
-  document.documentElement.classList.toggle('dark', dark);
-  document.getElementById('iMoon').style.display = dark ? 'none' : '';
-  document.getElementById('iSun').style.display  = dark ? ''     : 'none';
+  applyTheme(dark);
   localStorage.setItem('alq-theme', dark ? 'dark' : 'light');
 });
 </script>
