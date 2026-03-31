@@ -570,14 +570,9 @@ function renderLaunches(filterYearId = '', searchText = '') {
   data.forEach(l => {
     const y    = years.find(y => y.id === l.year_id);
 
-    /* Meta: fecha primero (negrita), luego nombre del tag en texto */
-    const tagLabel = l.is_urgent ? 'Urgente'
-                   : l.status_tag === 'new' ? 'Nuevo'
-                   : l.status_tag === 'upd' ? 'Actualización'
-                   : '';   /* Sin tag → no muestra nada */
+    /* Meta: solo fecha — el tag ya aparece junto al nombre */
     const datePart = l.launch_date ? `<strong>${fmtDate(l.launch_date)}</strong>` : '';
-    const metaParts = [datePart, tagLabel].filter(Boolean);
-    const metaHtml  = metaParts.join(' · ');
+    const metaHtml = datePart;
 
     /* Botones ↑↓ solo si el hito no tiene fecha (orden manual) */
     const moveBtns = l.launch_date ? '' : `

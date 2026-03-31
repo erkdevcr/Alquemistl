@@ -738,24 +738,28 @@ function renderAll(YEARS) {
 
   function aActivate(idx) {
     if (idx === aActive) return;
-    const isBack = idx < aActive;          /* click izquierda = ir atrás */
-    const newSeg = document.querySelectorAll('.seg')[idx];
-    const body   = newSeg && newSeg.querySelector('.seg-body');
+    const isBack  = idx < aActive;
+    const SEG_W   = getSegW();
 
-    /* Fijar posición inicial sin transición para que el primer frame sea correcto */
-    if (body) {
-      body.style.transition = 'none';
-      body.style.transform  = `translateX(${isBack ? -70 : 70}px)`;
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        body.style.transition = '';
-        body.style.transform  = '';
-      }));
-    }
+    /* ── Animación tipo "cámara": el contenedor entra desde un lado ── */
+    /* 1. Colocar el strip desplazado en la dirección opuesta (sin transición) */
+    segsEl.style.transition = 'none';
+    segsEl.style.transform  = `translateX(${isBack ? SEG_W : -SEG_W}px)`;
 
+    /* 2. Actualizar estado activo e visibilidad inmediatamente */
     aActive = idx;
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
     updateVisible(idx);
     posAccent(idx);
+
+    /* 3. Disparar la animación al reposo (translateX → 0) */
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      segsEl.style.transition = 'transform 0.38s cubic-bezier(0.4,0,0.2,1)';
+      segsEl.style.transform  = '';
+      segsEl.addEventListener('transitionend', () => {
+        segsEl.style.transition = '';
+      }, { once: true });
+    }));
   }
 
   function getSegW() {
@@ -777,9 +781,15 @@ function renderAll(YEARS) {
 
   segsEl.addEventListener('click', e => {
     const s = e.target.closest('.seg');
-    if (!s || +s.dataset.yi === aActive) return;
-    /* El único círculo visible no-activo es el siguiente → avanzar */
-    aActivate(Math.min(aActive + 1, YEARS.length - 1));
+    if (!s) return;
+    const clickedIdx = +s.dataset.yi;
+    if (clickedIdx === aActive) {
+      /* Tocar el año activo = retroceder */
+      if (aActive > 0) aActivate(aActive - 1);
+    } else {
+      /* Tocar el círculo de la derecha = avanzar */
+      aActivate(Math.min(aActive + 1, YEARS.length - 1));
+    }
   });
 
   function fActivate(idx) {
