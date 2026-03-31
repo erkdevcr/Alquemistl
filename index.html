@@ -512,6 +512,13 @@ const supa = (path) => fetch(`${SUPA_URL}/rest/v1/${path}`, {
 /* ── helpers ── */
 const TM  = { new:'NEW', upd:'UPD', urg:'URG' };
 
+/* Palabras de tag que no deben mostrarse como detail */
+const DET_SKIP = new Set(['nuevo','actualización','actualizacion','urgente','new','upd','urg']);
+function cleanDet(d) {
+  if (!d) return '';
+  return DET_SKIP.has(d.trim().toLowerCase()) ? '' : d;
+}
+
 /* Construye el tag combinando status_tag + is_urgent */
 function buildTag(row) {
   if (row.is_urgent) return `<span class="tag tag-urg">URG</span>`;
@@ -638,7 +645,7 @@ function renderAll(YEARS) {
         <div class="hlabel" style="display:flex;flex-direction:column;align-items:center;gap:1px;width:max-content;text-align:center;">
           ${tagHtml ? `<div class="hline-tag">${tagHtml}</div>` : ''}
           <div class="hline-name">${l.n}</div>
-          ${l.d         ? `<div class="hline-det">${l.d}</div>`        : ''}
+          ${cleanDet(l.d) ? `<div class="hline-det">${cleanDet(l.d)}</div>` : ''}
           ${datePart    ? `<div class="hline-date">${datePart}</div>`   : ''}
           ${itemsPart   ? `<div class="hline-items">${itemsPart}</div>` : ''}
         </div>`;
@@ -694,7 +701,7 @@ function renderAll(YEARS) {
       return `
         <div class="fc-card">
           <div class="fc-card-name">${l.n}${tagHtml}</div>
-          ${l.d  ?`<div class="fc-card-detail">${l.d}</div>`:''}
+          ${cleanDet(l.d)?`<div class="fc-card-detail">${cleanDet(l.d)}</div>`:''}
           ${l.sub?`<div class="fc-card-sub">${l.sub}</div>`:''}
         </div>`;
     }).join('');
