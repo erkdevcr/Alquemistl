@@ -235,9 +235,15 @@ html.dark #loading {
 
 .seg-body {
   position:absolute; left:var(--seg-w); right:0; top:0; bottom:0;
-  opacity:0; pointer-events:none; transition:opacity .2s;
+  opacity:0; pointer-events:none;
+  transform:translateX(0);
+  transition:opacity .2s, transform .42s cubic-bezier(.4,0,.2,1);
 }
-.seg.active .seg-body { opacity:1; pointer-events:all; transition:opacity .45s .28s; }
+.seg.active .seg-body {
+  opacity:1; pointer-events:all;
+  transform:translateX(0);
+  transition:opacity .45s .28s, transform .42s .08s cubic-bezier(.4,0,.2,1);
+}
 
 .row-above {
   position:absolute; left:0; right:0;
@@ -724,6 +730,20 @@ function renderAll(YEARS) {
 
   function aActivate(idx) {
     if (idx === aActive) return;
+    const isBack = idx < aActive;          /* click izquierda = ir atrás */
+    const newSeg = document.querySelectorAll('.seg')[idx];
+    const body   = newSeg && newSeg.querySelector('.seg-body');
+
+    /* Fijar posición inicial sin transición para que el primer frame sea correcto */
+    if (body) {
+      body.style.transition = 'none';
+      body.style.transform  = `translateX(${isBack ? -70 : 70}px)`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        body.style.transition = '';
+        body.style.transform  = '';
+      }));
+    }
+
     aActive = idx;
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
     updateVisible(idx);
