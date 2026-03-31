@@ -545,11 +545,11 @@ async function saveField(table, id, changes, onSuccess) {
 /* ══════════════════════════════════════════
    HELPERS
 ══════════════════════════════════════════ */
-const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 function fmtDate(d) {
   if (!d) return '—';
   const [y,m] = d.split('-');
-  return `${MESES[parseInt(m,10)-1]} ${y}`;
+  return `${MESES[parseInt(m,10)-1]}`;
 }
 
 function tagBadge(row) {
