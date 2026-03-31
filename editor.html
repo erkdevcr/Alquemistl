@@ -219,13 +219,13 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 <div class="wrap">
   <!-- TABS -->
   <div class="tabs">
-    <div class="tab active" data-tab="years">Años</div>
-    <div class="tab" data-tab="launches">Hitos</div>
+    <div class="tab" data-tab="years">Años</div>
+    <div class="tab active" data-tab="launches">Hitos</div>
     <div class="tab" data-tab="config">Configuración</div>
   </div>
 
   <!-- TAB: AÑOS -->
-  <div id="tab-years">
+  <div id="tab-years" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
       <div class="section-label" id="years-label">Años</div>
       <div style="display:flex;gap:8px;">
@@ -348,7 +348,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
   </div>
 
   <!-- TAB: HITOS -->
-  <div id="tab-launches" style="display:none">
+  <div id="tab-launches">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div class="section-label" id="launches-label">Hitos</div>
       <button class="btn btn-accent" id="btn-add-launch">+ Nuevo hito</button>
