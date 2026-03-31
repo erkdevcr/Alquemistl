@@ -557,6 +557,7 @@ async function loadData() {
     supa('timeline_years?select=*&order=year.asc'),
     supa('timeline_launches?select=*&order=position.asc')
   ]);
+  years.sort((a, b) => a.year - b.year);
 
   /* Agrupar hitos por year_id */
   const launchMap = {};

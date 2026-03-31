@@ -686,7 +686,7 @@ document.getElementById('btn-save-new-year').addEventListener('click', async () 
   if (!yr || yr < 2020 || yr > 2099) { toast('Introduce un año válido (2020–2099)'); return; }
   if (years.find(y => y.year === yr)) { toast('Ese año ya existe'); return; }
   const isCur = document.getElementById('new-year-current').checked;
-  await api.post('timeline_years', { year: yr, is_current: isCur });
+  await api.post('timeline_years', { year: yr, is_current: isCur, sort_order: yr });
   toast(`Año ${yr} creado ✓`);
   document.getElementById('add-year-form').classList.remove('open');
   document.getElementById('new-year-num').value = '';
@@ -720,6 +720,7 @@ async function loadAll() {
     api.get('timeline_years',   'select=*&order=year.asc'),
     api.get('timeline_launches','select=*&order=year_id.asc,position.asc,id.asc')
   ]);
+  years.sort((a, b) => a.year - b.year);
 
   /* Guardar filtro activo actual */
   const activeYrId = document.querySelector('#year-bar .ypill.active')?.dataset.id ?? '';
