@@ -464,7 +464,7 @@ function renderYears() {
       <div class="card-header" data-id="${y.id}">
         <div>
           <div class="card-title">${y.year} ${y.is_current ? '<span class="badge badge-new">ACTUAL</span>' : ''}</div>
-          <div class="card-meta">${y.items_label || '—'} items · ${y.revenue || '—'} · ${y.market || 'Sin mercado'}</div>
+          <div class="card-meta">${y.items_label || '—'} items · ${y.revenue || '—'}${y.market ? ' · ' + y.market : ''}</div>
         </div>
         <div class="card-actions">
           <button class="btn-del-year" title="Eliminar año" data-yid="${y.id}" data-ynum="${y.year}">
