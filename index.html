@@ -129,20 +129,21 @@ html.dark #loading {
 .ctrl-tab { display:flex; align-items:center; position:relative; }
 .ctrl-tab::before {
   content:''; display:block;
-  width:1px; height:clamp(20px,1.8vw,34px);
-  background:var(--g20); flex-shrink:0; margin-right:0;
+  width:2px; height:clamp(22px,2vw,38px);
+  background:var(--g40); flex-shrink:0; margin-right:0;
+  border-radius:1px;
 }
 .ctrl-handle {
-  width:18px; height:clamp(24px,2vw,38px); flex-shrink:0;
-  border:none; border-left:none;
-  background:none; cursor:pointer; color:var(--g40);
+  width:22px; height:clamp(24px,2vw,38px); flex-shrink:0;
+  border:none;
+  background:none; cursor:pointer; color:var(--g60);
   display:flex; align-items:center; justify-content:center;
   border-radius:0 5px 5px 0;
   transition:color .2s;
   padding:0;
 }
-.ctrl-handle:hover { border-color:var(--fg); color:var(--fg); background:var(--g10); }
-.ctrl-handle svg { width:9px; height:9px; transition:transform .32s; }
+.ctrl-handle:hover { color:var(--fg); }
+.ctrl-handle svg { width:13px; height:13px; stroke-width:3; transition:transform .32s; }
 .ctrl-tab.open .ctrl-handle svg { transform:rotate(180deg); }
 .ctrl-panel {
   display:flex; align-items:center; gap:6px;
