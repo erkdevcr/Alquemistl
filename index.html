@@ -126,7 +126,7 @@ html.dark #loading {
 
 .hdr-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
 .alq-brand { display:flex; align-items:center; }
-.alq-logo  { height:18px; width:auto; display:block; }
+.alq-logo  { height:clamp(14px,1.5vw,32px); width:auto; display:block; }
 .alq-logo path { fill: var(--fg); transition: fill .3s; }
 .hdr-badge { font-size:clamp(7px,.82vw,18px); font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--g40); }
 
@@ -463,7 +463,6 @@ html.dark #loading {
     <div class="li"><div class="lsw" style="background:var(--fg)"></div>NEW — Nuevo vs. plan original</div>
     <div class="li"><div class="lsw" style="background:var(--g20);border:1px solid var(--g40)"></div>UPD — Detalle actualizado</div>
     <div class="li"><div class="lsw" style="background:#cc2200;animation:blink 1.8s ease-in-out infinite"></div>URG — Urgente en board</div>
-    <div class="li"><div class="lsw" style="background:var(--bg);border:1px solid var(--g40)"></div>* — Proyección</div>
   </div>
   <div class="hint" id="hint">Clic en un año para desplegar &nbsp;·&nbsp; ← → teclado</div>
 </footer>
