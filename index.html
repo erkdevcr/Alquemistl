@@ -122,7 +122,31 @@ html.dark #loading {
 .hd  { width:1px; height:34px; background:var(--g20); }
 .yr  { font-size:clamp(22px,2.57vw,56px); font-weight:700; color:var(--fg); letter-spacing:-.03em; flex-shrink:0; }
 
-.hdr-ctr { display:flex; gap:8px; align-items:center; }
+.hdr-ctr { display:none; } /* movido a ctrl-panel */
+
+/* ── Lengüeta de controles ── */
+.yr-grp { display:flex; align-items:center; }
+.ctrl-tab { display:flex; align-items:center; position:relative; }
+.ctrl-handle {
+  width:18px; height:clamp(24px,2vw,38px); flex-shrink:0;
+  border:1.5px solid var(--g20); border-left:none;
+  background:none; cursor:pointer; color:var(--g40);
+  display:flex; align-items:center; justify-content:center;
+  border-radius:0 5px 5px 0;
+  transition:border-color .2s, background .2s, color .2s;
+  padding:0;
+}
+.ctrl-handle:hover { border-color:var(--fg); color:var(--fg); background:var(--g10); }
+.ctrl-handle svg { width:9px; height:9px; transition:transform .32s; }
+.ctrl-tab.open .ctrl-handle svg { transform:rotate(180deg); }
+.ctrl-panel {
+  display:flex; align-items:center; gap:6px;
+  max-width:0; overflow:hidden; opacity:0; padding:0;
+  transition:max-width .35s cubic-bezier(.4,0,.2,1),
+             opacity    .25s cubic-bezier(.4,0,.2,1),
+             padding    .35s cubic-bezier(.4,0,.2,1);
+}
+.ctrl-tab.open .ctrl-panel { max-width:280px; opacity:1; padding-left:8px; }
 
 .btn-pill {
   display:inline-flex; align-items:center; gap:7px;
@@ -438,23 +462,31 @@ html.dark #loading {
       })();
     </script>
     <div class="hd"></div>
-    <div class="yr">2026–2030</div>
-  </div>
-
-  <div class="hdr-ctr">
-    <button class="btn-pill" id="viewToggle"></button>
-    <button class="btn-icon" id="themeToggle" title="Cambiar tema">
-      <svg id="iMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-      <svg id="iSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1"  x2="12" y2="3"/> <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/> <line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-    </button>
+    <div class="yr-grp">
+      <div class="yr">2026–2030</div>
+      <div class="ctrl-tab" id="ctrlTab">
+        <button class="ctrl-handle" id="ctrlHandle" title="Controles">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="ctrl-panel" id="ctrlPanel">
+          <button class="btn-icon" id="fsToggle" title="Pantalla completa">
+            <svg id="iExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <svg id="iCompress" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/></svg>
+          </button>
+          <button class="btn-pill" id="viewToggle"></button>
+          <button class="btn-icon" id="themeToggle" title="Cambiar tema">
+            <svg id="iMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg id="iSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1"  x2="12" y2="3"/> <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/> <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/> <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/> <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="hdr-right">
@@ -946,6 +978,40 @@ function renderAll(YEARS) {
     applyTheme(dark);
     localStorage.setItem('alq-theme', dark ? 'dark' : 'light');
   });
+
+  /* ── LENGÜETA DE CONTROLES ── */
+  const ctrlTab    = document.getElementById('ctrlTab');
+  const ctrlHandle = document.getElementById('ctrlHandle');
+  ctrlHandle.addEventListener('click', e => {
+    e.stopPropagation();
+    ctrlTab.classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!ctrlTab.contains(e.target)) ctrlTab.classList.remove('open');
+  });
+
+  /* ── BOTÓN FULLSCREEN ── */
+  const fsBtn      = document.getElementById('fsToggle');
+  const iExpand    = document.getElementById('iExpand');
+  const iCompress  = document.getElementById('iCompress');
+
+  function updateFsIcon() {
+    const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+    iExpand.style.display   = isFs ? 'none' : '';
+    iCompress.style.display = isFs ? '' : 'none';
+  }
+
+  fsBtn.addEventListener('click', () => {
+    const el = document.documentElement;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen)?.call(document).catch(() => {});
+    } else {
+      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el).catch(() => {});
+    }
+  });
+
+  document.addEventListener('fullscreenchange',       updateFsIcon);
+  document.addEventListener('webkitfullscreenchange', updateFsIcon);
 
   /* ── FULLSCREEN AUTOMÁTICO EN LANDSCAPE (móvil) ── */
   function tryFullscreen() {
