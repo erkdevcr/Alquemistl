@@ -79,6 +79,11 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 .card-title{font-size:13px;font-weight:600;}
 .card-meta{font-size:10px;color:var(--g60);margin-top:2px;}
 .card-actions{display:flex;gap:6px;align-items:center;}
+.btn-del-year{
+  background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;
+  color:var(--g40);display:flex;align-items:center;transition:color .15s,background .15s;
+}
+.btn-del-year:hover{color:#cc2200;background:rgba(204,34,0,.08);}
 .card-body{display:none;padding:16px;}
 .card-body.open{display:block;}
 
@@ -423,6 +428,9 @@ function renderYears() {
           <div class="card-meta">${y.items_label || '—'} items · ${y.revenue || '—'} · ${y.market || 'Sin mercado'}</div>
         </div>
         <div class="card-actions">
+          <button class="btn-del-year" title="Eliminar año" data-yid="${y.id}" data-ynum="${y.year}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" style="color:var(--g40);transition:transform .2s" class="chevron"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
@@ -454,13 +462,34 @@ function renderYears() {
       </div>`;
     el.appendChild(card);
 
-    card.querySelector('.card-header').addEventListener('click', () => {
+    card.querySelector('.card-header').addEventListener('click', e => {
+      if (e.target.closest('.btn-del-year')) return; /* no colapsar al borrar */
       const body = document.getElementById(`year-body-${y.id}`);
       const chev = card.querySelector('.chevron');
       const hdr  = card.querySelector('.card-header');
       const open = body.classList.toggle('open');
       hdr.classList.toggle('open', open);
       chev.style.transform = open ? 'rotate(180deg)' : '';
+    });
+
+    card.querySelector('.btn-del-year').addEventListener('click', async e => {
+      e.stopPropagation();
+      const yid  = +e.currentTarget.dataset.yid;
+      const ynum =  e.currentTarget.dataset.ynum;
+      const hitosCount = launches.filter(l => l.year_id === yid).length;
+      const extra = hitosCount > 0
+        ? ` Contiene ${hitosCount} hito${hitosCount !== 1 ? 's' : ''} que también serán eliminados.`
+        : '';
+      const ok = await confirmModal(`¿Eliminar el año ${ynum}?${extra} Esta acción no se puede deshacer.`);
+      if (!ok) return;
+      /* Primero borrar hitos asociados, luego el año */
+      const hitosDeletes = launches
+        .filter(l => l.year_id === yid)
+        .map(l => api.delete('timeline_launches', l.id));
+      await Promise.all(hitosDeletes);
+      await api.delete('timeline_years', yid);
+      toast(`Año ${ynum} eliminado`);
+      loadAll();
     });
   });
 
