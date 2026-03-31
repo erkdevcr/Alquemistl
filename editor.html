@@ -14,6 +14,12 @@
   --danger:#cc2200;
   --font:'Space Grotesk','Helvetica Neue',Arial,sans-serif;
 }
+html.dark {
+  --bg:#111c26; --fg:#d8e8f2;
+  --g10:#1a2c3a; --g20:#2e4455; --g40:#627a8e; --g60:#8aacbe; --g90:#c8dce8;
+  --accent:#4d9fff;
+}
+html.dark body { background: linear-gradient(rgb(0,0,0) 0%, rgb(26,32,40) 50%, rgb(41,56,69) 100%) fixed; }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:100vh;}
 
@@ -174,6 +180,10 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
     <h1>Editor <span>Línea del Tiempo — Quinquenio Joyas</span></h1>
   </div>
   <div class="hdr-right">
+    <button class="btn" id="themeToggle" title="Cambiar tema">
+      <svg id="iMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="iSun"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+    </button>
     <a class="btn" href="index.html">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
       Ver Timeline
@@ -235,23 +245,12 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
           <input type="date" id="new-launch-date">
         </div>
         <div class="form-group">
-          <label>Posición manual</label>
-          <input type="number" id="new-position" placeholder="0" value="0">
-        </div>
-        <div class="form-group">
           <label>Tag</label>
           <select id="new-status-tag">
             <option value="">Sin tag</option>
             <option value="new">NEW</option>
             <option value="upd">UPD</option>
             <option value="urg">URG</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Grupo</label>
-          <select id="new-group">
-            <option value="n">Nuevos Lanzamientos</option>
-            <option value="w">Actualizaciones de Línea</option>
           </select>
         </div>
       </div>
@@ -480,23 +479,12 @@ function renderLaunches(filterYearId = '', searchText = '') {
             <input type="date" value="${l.launch_date||''}" data-table="timeline_launches" data-id="${l.id}" data-field="launch_date">
           </div>
           <div class="form-group">
-            <label>Posición manual</label>
-            <input type="number" value="${l.position||0}" data-table="timeline_launches" data-id="${l.id}" data-field="position">
-          </div>
-          <div class="form-group">
             <label>Tag</label>
             <select data-table="timeline_launches" data-id="${l.id}" data-field="status_tag">
               <option value="" ${!l.status_tag && !l.is_urgent?'selected':''}>Sin tag</option>
               <option value="new" ${l.status_tag==='new'?'selected':''}>NEW</option>
               <option value="upd" ${l.status_tag==='upd'?'selected':''}>UPD</option>
               <option value="urg" ${l.is_urgent?'selected':''}>URG</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Grupo</label>
-            <select data-table="timeline_launches" data-id="${l.id}" data-field="group">
-              <option value="n" ${l.group==='n'?'selected':''}>Nuevos Lanzamientos</option>
-              <option value="w" ${l.group==='w'?'selected':''}>Actualizaciones de Línea</option>
             </select>
           </div>
         </div>
@@ -534,8 +522,10 @@ function renderLaunches(filterYearId = '', searchText = '') {
       else if (inp.type === 'number') val = inp.value ? Number(inp.value) : null;
       else val = inp.value || null;
 
-      /* URG se maneja como is_urgent=true + status_tag=null */
-      if (inp.dataset.field === 'status_tag') {
+      /* year_id change — recargar lista para reflejar nuevo año */
+      if (inp.dataset.field === 'year_id' || inp.dataset.field === 'launch_date') {
+        saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val }, () => loadAll());
+      } else if (inp.dataset.field === 'status_tag') {
         const isUrg = val === 'urg';
         const changes = isUrg
           ? { is_urgent: true,  status_tag: null }
@@ -580,10 +570,10 @@ document.getElementById('btn-save-new-launch').addEventListener('click', async (
     detail:      document.getElementById('new-detail').value || null,
     item_count:  document.getElementById('new-item-count').value ? Number(document.getElementById('new-item-count').value) : null,
     launch_date: document.getElementById('new-launch-date').value || null,
-    position:    Number(document.getElementById('new-position').value) || 0,
+    position:    0,
     status_tag:  document.getElementById('new-status-tag').value === 'urg' ? null : (document.getElementById('new-status-tag').value || null),
     is_urgent:   document.getElementById('new-status-tag').value === 'urg',
-    group:       document.getElementById('new-group').value
+    group:       'n'
   };
 
   await api.post('timeline_launches', body);
@@ -632,7 +622,7 @@ document.getElementById('search-launch').addEventListener('input', () => {
 async function loadAll() {
   [years, launches] = await Promise.all([
     api.get('timeline_years', 'select=*&order=sort_order.asc'),
-    api.get('timeline_launches', 'select=*&order=year_id.asc,position.asc')
+    api.get('timeline_launches', 'select=*&order=launch_date.asc.nullslast,id.asc')
   ]);
 
   /* Poblar selects de años */
@@ -649,6 +639,15 @@ async function loadAll() {
 }
 
 loadAll();
+
+/* ── THEME ── */
+let dark = false;
+document.getElementById('themeToggle').addEventListener('click', () => {
+  dark = !dark;
+  document.documentElement.classList.toggle('dark', dark);
+  document.getElementById('iMoon').style.display = dark ? 'none' : '';
+  document.getElementById('iSun').style.display  = dark ? ''     : 'none';
+});
 </script>
 </body>
 </html>
