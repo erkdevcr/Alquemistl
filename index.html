@@ -691,7 +691,7 @@ function renderAll(YEARS) {
     node.innerHTML = `
       <div class="fc-ticks-a">${allLL.slice(0,8).map((_,j)=>`<div class="fc-tick" style="height:${THA[j]}px"></div>`).join('')}</div>
       <div class="fc-circ${y.cur?' current':''}">${y.year}</div>
-      <div class="fc-ticks-b"></div>`;
+      <div class="fc-ticks-b">${allLL.slice(8,16).map((_,j)=>`<div class="fc-tick" style="height:${THB[j]}px"></div>`).join('')}</div>`;
     node.addEventListener('click', () => fActivate(i));
     fcYears.appendChild(node);
 
@@ -714,10 +714,10 @@ function renderAll(YEARS) {
     pane.innerHTML = `
       <div class="fc-ph">
         <div class="fc-nav">
-          <button onclick="fActivate(${i-1})" ${i===0?'disabled':''}>
+          <button data-nav="${i-1}" ${i===0?'disabled':''}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
-          <button onclick="fActivate(${i+1})" ${i===YEARS.length-1?'disabled':''}>
+          <button data-nav="${i+1}" ${i===YEARS.length-1?'disabled':''}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
         </div>
@@ -731,6 +731,10 @@ function renderAll(YEARS) {
         </div>
       </div>
       ${allLL.length?`<div><div class="fc-sec-lbl">Detalle de lanzamientos</div><div class="fc-cards">${cardRow(allLL)}</div></div>`:''}`;
+    /* Flechas — event listeners en vez de onclick para acceder a fActivate local */
+    pane.querySelectorAll('[data-nav]').forEach(btn => {
+      btn.addEventListener('click', () => fActivate(+btn.dataset.nav));
+    });
     fcPanes.appendChild(pane);
   });
 
