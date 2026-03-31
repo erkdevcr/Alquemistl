@@ -656,8 +656,15 @@ function renderLaunches(filterYearId = '', searchText = '') {
     norm(l.name   || '').includes(q) ||
     norm(l.detail || '').includes(q)
   );
-  /* Ordenar: con fecha primero (año · mes), sin fecha al final por posición */
+  /* Ordenar */
   data = [...data].sort((a, b) => {
+    if (!filterYearId) {
+      /* Vista TODOS: primero por año, luego fechados antes de no-fechados, luego fecha/posición */
+      const ya = years.find(y => y.id === a.year_id)?.year || 0;
+      const yb = years.find(y => y.id === b.year_id)?.year || 0;
+      if (ya !== yb) return ya - yb;
+    }
+    /* Dentro del mismo año (o vista filtrada): fechados primero por mes, sin fecha al final */
     if (a.launch_date && b.launch_date) return a.launch_date.localeCompare(b.launch_date);
     if (a.launch_date) return -1;
     if (b.launch_date) return 1;
@@ -674,8 +681,8 @@ function renderLaunches(filterYearId = '', searchText = '') {
     const datePart = l.launch_date ? `<strong>${fmtDate(l.launch_date)}</strong>` : '';
     const metaHtml = datePart;
 
-    /* Drag handle solo si el hito no tiene fecha (orden manual) */
-    const dragHandle = !l.launch_date ? `
+    /* Drag handle solo si hay filtro de año activo y el hito no tiene fecha */
+    const dragHandle = (filterYearId && !l.launch_date) ? `
       <div class="drag-handle" title="Arrastrar para reordenar">
         <svg viewBox="0 0 10 16" width="11" height="16" fill="currentColor">
           <circle cx="3" cy="3"  r="1.3"/><circle cx="7" cy="3"  r="1.3"/>
@@ -756,8 +763,8 @@ function renderLaunches(filterYearId = '', searchText = '') {
       chev.style.transform = open ? 'rotate(180deg)' : '';
     });
 
-    /* drag & drop para hitos sin fecha */
-    if (!l.launch_date) setupCardDrag(card, l.id, l.year_id);
+    /* drag & drop solo en vista de año filtrado y sin fecha */
+    if (filterYearId && !l.launch_date) setupCardDrag(card, l.id, l.year_id);
 
     /* eliminar con modal propio */
     card.querySelector('.btn-del').addEventListener('click', async e => {
