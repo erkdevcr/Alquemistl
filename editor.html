@@ -269,8 +269,16 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
           <input type="number" id="new-item-count" placeholder="Ej: 3">
         </div>
         <div class="form-group">
-          <label>Fecha lanzamiento</label>
-          <input type="date" id="new-launch-date">
+          <label>Mes de lanzamiento</label>
+          <select id="new-launch-month">
+            <option value="">Sin mes</option>
+            <option value="01">Enero</option><option value="02">Febrero</option>
+            <option value="03">Marzo</option><option value="04">Abril</option>
+            <option value="05">Mayo</option><option value="06">Junio</option>
+            <option value="07">Julio</option><option value="08">Agosto</option>
+            <option value="09">Septiembre</option><option value="10">Octubre</option>
+            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Tag</label>
@@ -375,6 +383,26 @@ function confirmModal(msg) {
     ok.addEventListener('click', onOk);
     no.addEventListener('click', onNo);
     bg.addEventListener('click', e => { if (e.target === bg) finish(false); }, { once: true });
+  });
+}
+
+/* Modal de aviso (solo OK, sin cancelar) */
+function alertModal(msg) {
+  return new Promise(resolve => {
+    document.getElementById('confirmMsg').textContent = msg;
+    const bg = document.getElementById('confirmModal');
+    const ok = document.getElementById('confirmOk');
+    const no = document.getElementById('confirmCancel');
+    no.style.display = 'none';
+    bg.classList.add('open');
+    const finish = () => {
+      bg.classList.remove('open');
+      no.style.display = '';
+      ok.removeEventListener('click', finish);
+      resolve();
+    };
+    ok.addEventListener('click', finish, { once: true });
+    bg.addEventListener('click', e => { if (e.target === bg) finish(); }, { once: true });
   });
 }
 
@@ -517,6 +545,13 @@ function renderLaunches(filterYearId = '', searchText = '') {
     norm(l.name   || '').includes(q) ||
     norm(l.detail || '').includes(q)
   );
+  /* Ordenar: con fecha primero (año · mes), sin fecha al final por posición */
+  data = [...data].sort((a, b) => {
+    if (a.launch_date && b.launch_date) return a.launch_date.localeCompare(b.launch_date);
+    if (a.launch_date) return -1;
+    if (b.launch_date) return 1;
+    return (a.position - b.position) || (a.id - b.id);
+  });
 
   document.getElementById('launches-label').textContent = `${data.length} hitos`;
   el.innerHTML = '';
@@ -576,8 +611,14 @@ function renderLaunches(filterYearId = '', searchText = '') {
             <input type="number" value="${l.item_count||''}" data-table="timeline_launches" data-id="${l.id}" data-field="item_count">
           </div>
           <div class="form-group">
-            <label>Fecha lanzamiento</label>
-            <input type="date" value="${l.launch_date||''}" data-table="timeline_launches" data-id="${l.id}" data-field="launch_date">
+            <label>Mes de lanzamiento</label>
+            <select data-table="timeline_launches" data-id="${l.id}" data-field="launch_month" data-year-id="${l.year_id}">
+              <option value="">Sin mes</option>
+              ${['01','02','03','04','05','06','07','08','09','10','11','12'].map((m,i) =>
+                `<option value="${m}" ${l.launch_date && l.launch_date.slice(5,7)===m ? 'selected' : ''}>${
+                  ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][i]
+                }</option>`).join('')}
+            </select>
           </div>
           <div class="form-group">
             <label>Tag</label>
@@ -645,8 +686,21 @@ function renderLaunches(filterYearId = '', searchText = '') {
       else if (inp.type === 'number') val = inp.value ? Number(inp.value) : null;
       else val = inp.value || null;
 
-      if (inp.dataset.field === 'year_id' || inp.dataset.field === 'launch_date') {
-        saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val }, () => loadAll());
+      if (inp.dataset.field === 'launch_month') {
+        /* Construir launch_date = YYYY-MM-01 con el año del hito */
+        const yr = years.find(y => String(y.id) === String(inp.dataset.yearId));
+        const newDate = val && yr ? `${yr.year}-${val}-01` : null;
+        saveField(inp.dataset.table, inp.dataset.id, { launch_date: newDate }, () => loadAll());
+      } else if (inp.dataset.field === 'year_id') {
+        /* Si el hito tiene fecha asignada, avisar que se borrará al cambiar de año */
+        const launch = launches.find(l => String(l.id) === String(inp.dataset.id));
+        if (launch && launch.launch_date) {
+          const newYr = years.find(y => String(y.id) === String(val));
+          alertModal(`El hito pasará al año ${newYr ? newYr.year : val}. El mes de lanzamiento se borrará porque debe pertenecer al año seleccionado.`);
+          saveField(inp.dataset.table, inp.dataset.id, { year_id: Number(val), launch_date: null }, () => loadAll());
+        } else {
+          saveField(inp.dataset.table, inp.dataset.id, { year_id: Number(val) }, () => loadAll());
+        }
       } else if (inp.dataset.field === 'status_tag') {
         const isUrg   = val === 'urg';
         const changes = isUrg
@@ -680,12 +734,15 @@ document.getElementById('btn-save-new-launch').addEventListener('click', async (
   const name = document.getElementById('new-name').value.trim();
   if (!name) { toast('El nombre es obligatorio'); return; }
 
+  const newYearId = Number(document.getElementById('new-year-id').value);
+  const newMonth  = document.getElementById('new-launch-month').value;
+  const newYrObj  = years.find(y => y.id === newYearId);
   const body = {
-    year_id:     Number(document.getElementById('new-year-id').value),
+    year_id:     newYearId,
     name,
     detail:      document.getElementById('new-detail').value || null,
     item_count:  document.getElementById('new-item-count').value ? Number(document.getElementById('new-item-count').value) : null,
-    launch_date: document.getElementById('new-launch-date').value || null,
+    launch_date: newMonth && newYrObj ? `${newYrObj.year}-${newMonth}-01` : null,
     position:    0,
     status_tag:  document.getElementById('new-status-tag').value === 'urg' ? null : (document.getElementById('new-status-tag').value || null),
     is_urgent:   document.getElementById('new-status-tag').value === 'urg',
@@ -695,7 +752,7 @@ document.getElementById('btn-save-new-launch').addEventListener('click', async (
   await api.post('timeline_launches', body);
   toast('Hito creado ✓');
   document.getElementById('add-launch-form').classList.remove('open');
-  ['new-name','new-detail','new-item-count','new-launch-date'].forEach(id => {
+  ['new-name','new-detail','new-item-count','new-launch-month'].forEach(id => {
     document.getElementById(id).value = '';
   });
   loadAll();
