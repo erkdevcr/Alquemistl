@@ -1000,7 +1000,7 @@ function renderAll(YEARS) {
         <div class="fc-card">
           ${tagHtml?`<div class="fc-card-tag">${tagHtml}</div>`:''}
           <div class="fc-card-name">${l.n}</div>
-          ${l.d?`<div class="fc-card-detail">${l.d}</div>`:''}
+          ${l.d?`<div class="fc-card-detail">${l.d.split(' · ').join('<br>')}</div>`:''}
           ${l.sub?`<div class="fc-card-sub">${l.sub}</div>`:''}
         </div>`;
     }).join('');
