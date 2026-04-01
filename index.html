@@ -986,10 +986,16 @@ function renderAll(YEARS) {
     pane.className = 'fc-pane' + (i===fActive?' active':'');
     pane.dataset.i = i;
 
+    /* Lee el color configurado para un tipo de tag y genera inline style */
+    const tagStyle = key => {
+      const col = localStorage.getItem('tl_col_' + key);
+      return col ? ` style="background:${col};color:#fff;border:none;"` : '';
+    };
+
     const cardRow = arr => arr.map(l => {
       const tagHtml = l.urg
-        ? `<span class="tag tag-urg">${TM.urg}</span>`
-        : (l.tag ? `<span class="tag tag-${l.tag}">${TM[l.tag]}</span>` : '');
+        ? `<span class="tag tag-urg"${tagStyle('urg')}>${TM.urg}</span>`
+        : (l.tag ? `<span class="tag tag-${l.tag}"${tagStyle(l.tag)}>${TM[l.tag]}</span>` : '');
       return `
         <div class="fc-card">
           ${tagHtml?`<div class="fc-card-tag">${tagHtml}</div>`:''}
