@@ -910,6 +910,28 @@ function renderLaunches(filterYearId = '', searchText = '') {
         }
         saveField(inp.dataset.table, inp.dataset.id, changes);
       } else {
+        /* Actualizar en memoria y reflejar en el header de la card sin cerrarla */
+        const card      = inp.closest('.card');
+        const launchId  = card?.dataset.launchId;
+        const launchObj = launches.find(l => String(l.id) === String(launchId));
+        if (launchObj) launchObj[inp.dataset.field] = val;
+        if (card && launchObj) {
+          const field = inp.dataset.field;
+          if (field === 'name') {
+            const y     = years.find(y => y.id === launchObj.year_id);
+            const title = card.querySelector('.card-title');
+            if (title) title.innerHTML =
+              `<span class="year-pill">${y ? y.year : '?'}</span>&nbsp;${val || ''}${tagBadge(launchObj)}`;
+          } else if (field === 'item_count') {
+            const meta  = card.querySelector('.card-meta');
+            if (meta) {
+              const itemsPart = val ? `${val} items` : '';
+              const datePart  = launchObj.launch_date
+                ? `<strong>${fmtDate(launchObj.launch_date)}</strong>` : '';
+              meta.innerHTML  = [itemsPart, datePart].filter(Boolean).join(' · ');
+            }
+          }
+        }
         saveField(inp.dataset.table, inp.dataset.id, { [inp.dataset.field]: val });
       }
     });
