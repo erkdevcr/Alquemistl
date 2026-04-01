@@ -431,6 +431,8 @@ html.dark #hito-popup { box-shadow:0 6px 28px rgba(0,0,0,.5); }
   transition:border-color .2s, box-shadow .2s;
 }
 .fc-card:hover { border-color:var(--g60); box-shadow:0 2px 10px rgba(0,0,0,.07); }
+.fc-card-tag    { margin-bottom:5px; }
+.fc-card-tag .tag { margin-left:0; font-size:calc(clamp(8px,.9vw,18px) * var(--tl-fscale)); padding:2px 7px; }
 .fc-card-name   { font-size:calc(clamp(10px,1.28vw,28px) * var(--tl-fscale)); font-weight:600; color:var(--fg); line-height:1.35; margin-bottom:3px; }
 .fc-card-detail { font-size:calc(clamp(9px,1.05vw,23px)  * var(--tl-fscale)); color:var(--g60); font-weight:400; line-height:1.4; margin-bottom:4px; }
 .fc-card-sub    { font-size:calc(clamp(7px,.93vw,20px)   * var(--tl-fscale)); color:var(--g40); font-weight:500; }
@@ -987,7 +989,8 @@ function renderAll(YEARS) {
         : (l.tag ? `<span class="tag tag-${l.tag}">${TM[l.tag]}</span>` : '');
       return `
         <div class="fc-card">
-          <div class="fc-card-name">${l.n}${tagHtml}</div>
+          ${tagHtml?`<div class="fc-card-tag">${tagHtml}</div>`:''}
+          <div class="fc-card-name">${l.n}</div>
           ${l.d?`<div class="fc-card-detail">${l.d}</div>`:''}
           ${l.sub?`<div class="fc-card-sub">${l.sub}</div>`:''}
         </div>`;
