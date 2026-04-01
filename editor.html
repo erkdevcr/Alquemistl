@@ -1272,49 +1272,44 @@ document.getElementById('btn-export-static').addEventListener('click', async () 
     if (!resp.ok) throw new Error(`No se pudo obtener index.html (${resp.status})`);
     let html = await resp.text();
 
-    /* 3 — Inyectar los datos como constante justo después del tag <script> principal */
-    const sdJson   = JSON.stringify({ cfgRows, years: expYears, launches: expLaunches });
-    const sdScript = `\n/* ══ STATIC EXPORT — datos integrados ══════════════════ */\nconst __SD__ = JSON.parse(${JSON.stringify(sdJson)});\n/* ════════════════════════════════════════════════════ */\n`;
-    html = html.replace('<script>\n/* ══════════════════════════════════════════\n   SUPABASE CONFIG', sdScript + '<script>\n/* ══════════════════════════════════════════\n   SUPABASE CONFIG');
+    /* 3 — Construir el script interceptor de fetch.
+       Intercepts ALL fetch calls to Supabase and returns the static payload.
+       This avoids fragile string-replacement of loadData internals. */
+    const sdJson = JSON.stringify({ cfgRows, years: expYears, launches: expLaunches });
+    const interceptor = `<script id="__static_interceptor__">
+(function(){
+  var __SD__ = JSON.parse(${JSON.stringify(sdJson)});
+  var _orig  = window.fetch.bind(window);
+  window.fetch = function(url, opts) {
+    if (typeof url === 'string' && url.indexOf('.supabase.co') !== -1) {
+      /* Escrituras (POST/PATCH/DELETE): silencioso */
+      if (opts && opts.method && opts.method !== 'GET') {
+        return Promise.resolve({ ok:true, json: function(){ return Promise.resolve([]); } });
+      }
+      /* Lecturas: devolver datos estáticos según endpoint */
+      var d = [];
+      if      (url.indexOf('/timeline_config')   !== -1) d = __SD__.cfgRows;
+      else if (url.indexOf('/timeline_years')    !== -1) d = __SD__.years;
+      else if (url.indexOf('/timeline_launches') !== -1) d = __SD__.launches;
+      return Promise.resolve({ ok:true, json: function(){ return Promise.resolve(d); } });
+    }
+    return _orig(url, opts);
+  };
+})();
+<\/script>`;
 
-    /* 4 — Reemplazar el bloque de fetch en loadData con datos estáticos */
-    html = html.replace(
-      `  const [cfgRows, years, launches] = await Promise.all([\n    supa('timeline_config?select=*&id=eq.1'),\n    supa('timeline_years?select=*&order=year.asc'),\n    supa('timeline_launches?select=*&order=position.asc')\n  ]);`,
-      `  const [cfgRows, years, launches] = [__SD__.cfgRows, __SD__.years, __SD__.launches];`
-    );
+    /* Inyectar el interceptor justo antes de </head> para que esté activo
+       antes de que el script principal defina supa() y llame a loadData() */
+    html = html.replace('</head>', interceptor + '\n</head>');
 
-    /* 5 — Eliminar bloque de live-reload (BroadcastChannel + polling) */
-    const liveStart = `  /* ── Live reload desde editor (BroadcastChannel) ── */\n  let _reloading = false;`;
-    const liveEnd   = `  }, 3000);\n\n  /* ── A− / A+ font scale ── */`;
-    const liveIdx   = html.indexOf(liveStart);
-    const liveEndIdx = html.indexOf(liveEnd);
-    if (liveIdx >= 0 && liveEndIdx >= 0) {
-      html = html.slice(0, liveIdx) +
-             `  /* Live reload deshabilitado — copia estática */\n\n  /* ── A− / A+ font scale ── */` +
-             html.slice(liveEndIdx + liveEnd.length);
+    /* 4 — Eliminar el botón flotante "Abrir editor" */
+    const fabIdx = html.indexOf('<a class="edit-fab"');
+    if (fabIdx !== -1) {
+      const fabClose = html.indexOf('</a>', fabIdx);
+      if (fabClose !== -1) html = html.slice(0, fabIdx) + html.slice(fabClose + 4);
     }
 
-    /* 6 — Quitar la llamada supaUpsert del font-scale (falla offline) */
-    html = html.replace(
-      `    supaUpsert('timeline_config', { id: 1, font_scale: _fontScale });`,
-      `    /* font_scale: no persiste en copia estática */`
-    );
-
-    /* 7 — Eliminar el botón flotante "Abrir editor" */
-    const fabStart = `<a class="edit-fab" href="editor.html"`;
-    const fabEnd   = `</a>\n\n<script>`;
-    const fabIdx   = html.indexOf(fabStart);
-    const fabEndIdx = html.indexOf(fabEnd);
-    if (fabIdx >= 0 && fabEndIdx >= 0) {
-      html = html.slice(0, fabIdx) + `\n<script>` + html.slice(fabEndIdx + fabEnd.length);
-    }
-
-    /* 8 — Agregar banner de "copia estática" al inicio del <body> */
-    const exportDate = new Date().toLocaleDateString('es-CR', { year:'numeric', month:'long', day:'numeric' });
-    const banner = `<div id="static-export-banner" style="position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(245,240,232,.96);border-top:1.5px solid #c8a96e;color:#5a4520;font-family:'Space Grotesk',Helvetica,sans-serif;font-size:10.5px;font-weight:600;letter-spacing:.09em;text-align:center;padding:6px 16px;backdrop-filter:blur(4px);">COPIA ESTÁTICA · SIN CONEXIÓN A BASE DE DATOS · EXPORTADA EL ${exportDate.toUpperCase()}</div>\n`;
-    html = html.replace('<body>\n', '<body>\n' + banner);
-
-    /* 9 — Crear archivo y disparar descarga */
+    /* 5 — Crear archivo y disparar descarga */
     status.textContent = 'Descargando…';
     const dateSlug = new Date().toISOString().slice(0, 10);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
