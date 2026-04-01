@@ -235,6 +235,7 @@ html.dark #loading {
               width     .48s cubic-bezier(.4,0,.2,1);
 }
 .seg { pointer-events:none; }   /* el seg completo no captura clics */
+.seg.active { overflow:visible; } /* permite que el texto del último hito no se corte */
 
 .circle-wrap {
   position:absolute; left:0; width:var(--seg-w);
@@ -306,8 +307,9 @@ html.dark #loading {
   position:absolute;
   display:flex; flex-direction:column; align-items:center;
   transform:translateX(-50%);
-  pointer-events:auto; cursor:pointer;
+  pointer-events:none; cursor:default;  /* solo activos capturan clics */
 }
+.seg.active .hito { pointer-events:auto; cursor:pointer; }
 .row-above .hito { bottom:0; justify-content:flex-end;   }
 .row-below .hito { top:0;    justify-content:flex-start; }
 .hito:hover .hline-name { opacity:.7; }
