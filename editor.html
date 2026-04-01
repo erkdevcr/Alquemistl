@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>if(localStorage.getItem('alq-theme')==='dark'){document.documentElement.classList.add('dark');document.querySelector('#metaTheme')&&(document.querySelector('#metaTheme').content='#111c26');}</script>
 <title>Editor — Línea del Tiempo</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M10 4h12v1l-5 7-1 1-1-1-5-7V4zm0 24h12v-1l-5-7-1-1-1 1-5 7v1zm1-1h10l-4-5.5-.5-.7-.5.7L11 27zm1-22l4 5.5.5.7.5-.7L21 5H11z' fill='%23fff'/%3E%3Crect x='9' y='4' width='14' height='1.5' fill='%23fff'/%3E%3Crect x='9' y='26.5' width='14' height='1.5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 538.4 365.89'%3E%3Cpath fill='%23706f6f' d='M538.4,128.52h-94.52C420.66,54.14,351.13,0,269.2,0S117.75,54.14,94.52,128.52H0v108.86h94.52c23.23,74.38,92.75,128.52,174.68,128.52s151.46-54.14,174.68-128.52h94.52v-108.86ZM269.2,307.82c-68.85,0-124.87-56.02-124.87-124.87s56.02-124.87,124.87-124.87,124.87,56.02,124.87,124.87-56.02,124.87-124.87,124.87Z'/%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -598,11 +598,30 @@ function refreshTagDropdowns() {
   });
 }
 
+/* Devuelve inline style con el color configurado para un tipo de tag */
+function tagColStyle(key) {
+  const c = document.getElementById('cfg-col-' + key)?.value || localStorage.getItem('tl_col_' + key);
+  return c ? ` style="background:${c};color:#fff;border:none;"` : '';
+}
+
+/* Inyecta/actualiza un <style> que aplica los colores configurados a .badge-* en vivo */
+function refreshBadgeColors() {
+  const cn = document.getElementById('cfg-col-new')?.value || localStorage.getItem('tl_col_new');
+  const cu = document.getElementById('cfg-col-upd')?.value || localStorage.getItem('tl_col_upd');
+  const cg = document.getElementById('cfg-col-urg')?.value || localStorage.getItem('tl_col_urg');
+  let st = document.getElementById('editor-badge-colors');
+  if (!st) { st = document.createElement('style'); st.id = 'editor-badge-colors'; document.head.appendChild(st); }
+  st.textContent =
+    (cn ? `.badge-new{background:${cn}!important;color:#fff!important}` : '') +
+    (cu ? `.badge-upd{background:${cu}!important;color:#fff!important;border:none!important}` : '') +
+    (cg ? `.badge-urg{background:${cg}!important;color:#fff!important}` : '');
+}
+
 function tagBadge(row) {
   const t = getTagNames();
-  if (row.is_urgent)             return `<span class="badge badge-urg">${t.urg}</span>`;
-  if (row.status_tag === 'new')  return `<span class="badge badge-new">${t.new}</span>`;
-  if (row.status_tag === 'upd')  return `<span class="badge badge-upd">${t.upd}</span>`;
+  if (row.is_urgent)             return `<span class="badge badge-urg"${tagColStyle('urg')}>${t.urg}</span>`;
+  if (row.status_tag === 'new')  return `<span class="badge badge-new"${tagColStyle('new')}>${t.new}</span>`;
+  if (row.status_tag === 'upd')  return `<span class="badge badge-upd"${tagColStyle('upd')}>${t.upd}</span>`;
   return '';
 }
 
@@ -1184,12 +1203,15 @@ async function initConfig() {
     if (rows && rows[0]) { cfgToForm(rows[0]); cfgToLocalStorage(rows[0]); }
   } catch(e) { console.warn('No se pudo cargar config desde DB:', e); }
 }
-initConfig().then(() => refreshTagDropdowns());
+initConfig().then(() => { refreshTagDropdowns(); refreshBadgeColors(); });
 
 /* Actualizar dropdowns en tiempo real al editar nombres de tags */
 ['new', 'upd', 'urg'].forEach(tag => {
   document.getElementById(`cfg-tag-${tag}-name`)
     ?.addEventListener('input', refreshTagDropdowns);
+  /* Actualizar colores de badge en tiempo real al cambiar el color picker */
+  document.getElementById(`cfg-col-${tag}`)
+    ?.addEventListener('input', refreshBadgeColors);
 });
 
 document.getElementById('btn-save-config').addEventListener('click', async () => {
