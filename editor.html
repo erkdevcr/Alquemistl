@@ -67,8 +67,8 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 
 /* ── CARDS ── */
 .section-label{
-  font-size:8px;font-weight:700;letter-spacing:.25em;text-transform:uppercase;
-  color:var(--g40);margin-bottom:12px;
+  font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--g60);margin-bottom:12px;
 }
 .card{
   background:var(--bg);border:1px solid var(--g20);
@@ -368,6 +368,9 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 
   <!-- TAB: HITOS -->
   <div id="tab-launches">
+    <p style="font-size:11px;line-height:1.65;color:var(--g60);margin-bottom:10px;padding:8px 10px;background:var(--g10);border-left:2.5px solid var(--g20);">
+      Los hitos sin mes asignado están al final de la lista y pueden reordenarse para definir su posición en el timeline — siempre quedarán al final del timeline.
+    </p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div class="section-label" id="launches-label">Hitos</div>
       <button class="btn btn-accent" id="btn-add-launch">+ Nuevo hito</button>
@@ -574,10 +577,32 @@ function fmtDate(d) {
   return `${MESES[parseInt(m,10)-1]}`;
 }
 
+/* Nombres actuales de tags (leyendo del formulario de config o del localStorage) */
+function getTagNames() {
+  const g = id => document.getElementById(id)?.value.trim();
+  return {
+    new: g('cfg-tag-new-name') || localStorage.getItem('tl_tag_new_name') || CFG_DEFAULTS.tag_new_name,
+    upd: g('cfg-tag-upd-name') || localStorage.getItem('tl_tag_upd_name') || CFG_DEFAULTS.tag_upd_name,
+    urg: g('cfg-tag-urg-name') || localStorage.getItem('tl_tag_urg_name') || CFG_DEFAULTS.tag_urg_name,
+  };
+}
+
+/* Actualiza las opciones de tag en todos los selects visibles */
+function refreshTagDropdowns() {
+  const t = getTagNames();
+  document.querySelectorAll('select[data-field="status_tag"], #new-status-tag').forEach(sel => {
+    const o = { new: sel.querySelector('[value="new"]'), upd: sel.querySelector('[value="upd"]'), urg: sel.querySelector('[value="urg"]') };
+    if (o.new) o.new.textContent = t.new;
+    if (o.upd) o.upd.textContent = t.upd;
+    if (o.urg) o.urg.textContent = t.urg;
+  });
+}
+
 function tagBadge(row) {
-  if (row.is_urgent)             return `<span class="badge badge-urg">URG</span>`;
-  if (row.status_tag === 'new')  return `<span class="badge badge-new">NEW</span>`;
-  if (row.status_tag === 'upd')  return `<span class="badge badge-upd">UPD</span>`;
+  const t = getTagNames();
+  if (row.is_urgent)             return `<span class="badge badge-urg">${t.urg}</span>`;
+  if (row.status_tag === 'new')  return `<span class="badge badge-new">${t.new}</span>`;
+  if (row.status_tag === 'upd')  return `<span class="badge badge-upd">${t.upd}</span>`;
   return '';
 }
 
@@ -787,6 +812,8 @@ function renderLaunches(filterYearId = '', searchText = '') {
   document.getElementById('launches-label').textContent = `${data.length} hitos`;
   el.innerHTML = '';
 
+  const _tn = getTagNames();  /* nombres de tags para este render */
+
   data.forEach(l => {
     const y    = years.find(y => y.id === l.year_id);
 
@@ -857,9 +884,9 @@ function renderLaunches(filterYearId = '', searchText = '') {
             <label>Tag</label>
             <select data-table="timeline_launches" data-id="${l.id}" data-field="status_tag">
               <option value="" ${!l.status_tag && !l.is_urgent?'selected':''}>Sin tag</option>
-              <option value="new" ${l.status_tag==='new'?'selected':''}>NEW</option>
-              <option value="upd" ${l.status_tag==='upd'?'selected':''}>UPD</option>
-              <option value="urg" ${l.is_urgent?'selected':''}>URG</option>
+              <option value="new" ${l.status_tag==='new'?'selected':''}>${_tn.new}</option>
+              <option value="upd" ${l.status_tag==='upd'?'selected':''}>${_tn.upd}</option>
+              <option value="urg" ${l.is_urgent?'selected':''}>${_tn.urg}</option>
             </select>
           </div>
         </div>
@@ -1157,7 +1184,13 @@ async function initConfig() {
     if (rows && rows[0]) { cfgToForm(rows[0]); cfgToLocalStorage(rows[0]); }
   } catch(e) { console.warn('No se pudo cargar config desde DB:', e); }
 }
-initConfig();
+initConfig().then(() => refreshTagDropdowns());
+
+/* Actualizar dropdowns en tiempo real al editar nombres de tags */
+['new', 'upd', 'urg'].forEach(tag => {
+  document.getElementById(`cfg-tag-${tag}-name`)
+    ?.addEventListener('input', refreshTagDropdowns);
+});
 
 document.getElementById('btn-save-config').addEventListener('click', async () => {
   const g = id => document.getElementById(id)?.value.trim();
