@@ -1199,6 +1199,9 @@ function renderAll(YEARS) {
   } else {
     setViewBtn('accordion');
   }
+  /* Siempre sincronizar tl_yr_id con el año activo actual (incluso en el render inicial) */
+  if (YEARS[aActive]) localStorage.setItem('tl_yr_id', YEARS[aActive].id);
+
   layoutSegs(aActive, false);
   posAccent(aActive);
   updateFcProg();
