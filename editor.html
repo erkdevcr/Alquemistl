@@ -107,7 +107,7 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 }
 .btn-del-year:hover{color:#cc2200;background:rgba(204,34,0,.08);}
 .card-body{display:none;padding:16px;}
-.card-body.open{display:block;}
+.card-body.open{display:block;max-height:70vh;overflow-y:auto;}
 
 /* ── FORM GRID ── */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
@@ -910,7 +910,7 @@ function renderLaunches(filterYearId = '', searchText = '') {
           </div>
           <div class="form-group full">
             <label>Detalle</label>
-            <textarea class="detail-tall" data-table="timeline_launches" data-id="${l.id}" data-field="detail">${l.detail||''}</textarea>
+            <textarea class="detail-tall" data-table="timeline_launches" data-id="${l.id}" data-field="detail">${(l.detail||'').split(' · ').join('\n')}</textarea>
           </div>
         </div>
       </div>`;
@@ -950,6 +950,7 @@ function renderLaunches(filterYearId = '', searchText = '') {
       let val;
       if (inp.type === 'checkbox') val = inp.checked;
       else if (inp.type === 'number') val = inp.value ? Number(inp.value) : null;
+      else if (inp.dataset.field === 'detail') val = inp.value.trim() ? inp.value.trim().split('\n').map(s=>s.trim()).filter(Boolean).join(' · ') : null;
       else val = inp.value || null;
 
       if (inp.dataset.field === 'launch_month') {
