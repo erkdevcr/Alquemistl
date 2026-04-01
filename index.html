@@ -757,6 +757,9 @@ async function loadData() {
     supa('timeline_launches?select=*&order=position.asc')
   ]);
 
+  /* Guardar fingerprint para detección de cambios cross-device */
+  _dataFP = JSON.stringify([cfgRows, years, launches]);
+
   /* Aplicar configuración global (sobreescribe caché localStorage) */
   if (Array.isArray(cfgRows) && cfgRows[0]) applyConfig(cfgRows[0]);
   years.sort((a, b) => a.year - b.year);
@@ -810,9 +813,12 @@ async function loadData() {
   return YEARS;
 }
 
-/* Estado global preservable entre reloads */
-let _aActive = 0, _fActive = 0, _curV = 'accordion';
+/* Estado global preservable entre reloads y navegaciones editor↔timeline */
+let _aActive = parseInt(localStorage.getItem('tl_yr_a') || '0', 10);
+let _fActive = parseInt(localStorage.getItem('tl_yr_f') || '0', 10);
+let _curV    = localStorage.getItem('tl_view') || 'accordion';
 let _hitoData = [];   /* datos de hitos para popup — se reconstruye en cada renderAll */
+let _dataFP   = '';   /* fingerprint para detectar cambios cross-device */
 
 /* ══════════════════════════════════════════
    RENDER
@@ -860,7 +866,7 @@ function renderAll(YEARS) {
     });
 
     const seg = document.createElement('div');
-    seg.className = `seg${yi===0?' active':''}`;
+    seg.className = `seg${yi===aActive?' active':''}`;
     seg.dataset.yi = yi;
     seg.innerHTML = `
       <div class="circle-wrap">
@@ -890,7 +896,7 @@ function renderAll(YEARS) {
     });
 
     const node = document.createElement('div');
-    node.className = 'fc-node' + (i===0?' active':'');
+    node.className = 'fc-node' + (i===fActive?' active':'');
     node.dataset.i = i;
     const tickN = Math.min(allLL.length, 6);
     node.innerHTML = `
@@ -901,7 +907,7 @@ function renderAll(YEARS) {
     fcYears.appendChild(node);
 
     const pane = document.createElement('div');
-    pane.className = 'fc-pane' + (i===0?' active':'');
+    pane.className = 'fc-pane' + (i===fActive?' active':'');
     pane.dataset.i = i;
 
     const cardRow = arr => arr.map(l => {
@@ -988,6 +994,7 @@ function renderAll(YEARS) {
   function aActivate(idx) {
     if (idx === aActive) return;
     aActive = idx; _aActive = idx;
+    localStorage.setItem('tl_yr_a', idx);
     document.querySelectorAll('.seg').forEach((s,i) => s.classList.toggle('active', i===idx));
     layoutSegs(idx, true);
     posAccent(idx);
@@ -1033,6 +1040,7 @@ function renderAll(YEARS) {
     requestAnimationFrame(() => requestAnimationFrame(() => { next.style.cssText = ''; }));
     setTimeout(() => { prev.style.cssText = ''; }, 420);
     fActive = idx; _fActive = idx;
+    localStorage.setItem('tl_yr_f', idx);
     fcYears.querySelectorAll('.fc-node').forEach((n,i) => n.classList.toggle('active', i===idx));
     updateFcProg();
   }
@@ -1063,6 +1071,7 @@ function renderAll(YEARS) {
   vBtn.addEventListener('click', () => {
     if (curV === 'accordion') {
       curV = 'fichas'; _curV = 'fichas';
+      localStorage.setItem('tl_view', 'fichas');
       vaEl.classList.remove('active'); vfEl.classList.add('active');
       setViewBtn('fichas');
       hint.textContent = 'Clic en un año para ver detalle · ← → teclado';
@@ -1070,6 +1079,7 @@ function renderAll(YEARS) {
       updateFcProg();
     } else {
       curV = 'accordion'; _curV = 'accordion';
+      localStorage.setItem('tl_view', 'accordion');
       vfEl.classList.remove('active'); vaEl.classList.add('active');
       setViewBtn('accordion');
       hint.textContent = 'Clic en un año para desplegar · ← → teclado';
@@ -1170,10 +1180,17 @@ function renderAll(YEARS) {
     if (e.key === 'ArrowLeft')  curV==='accordion' ? aActivate(Math.max(aActive-1,0))               : fActivate(fActive-1);
   });
 
-  /* ── INIT ── */
-  setViewBtn('accordion');
-  layoutSegs(0, false);
-  posAccent(0);
+  /* ── INIT — restaurar vista y año guardados ── */
+  if (_curV === 'fichas') {
+    curV = 'fichas';
+    vaEl.classList.remove('active'); vfEl.classList.add('active');
+    setViewBtn('fichas');
+    hint.textContent = 'Clic en un año para ver detalle · ← → teclado';
+  } else {
+    setViewBtn('accordion');
+  }
+  layoutSegs(aActive, false);
+  posAccent(aActive);
   updateFcProg();
   window.addEventListener('resize', () => { layoutSegs(aActive, false); posAccent(aActive); updateFcProg(); });
 }
@@ -1225,10 +1242,28 @@ function renderAll(YEARS) {
     finally { _reloading = false; }
   }
 
+  /* Mismo dispositivo: BroadcastChannel (instantáneo) */
   const tlChannel = new BroadcastChannel('timeline_updates');
   tlChannel.addEventListener('message', e => {
     if (e.data?.type === 'data_changed') tlReload();
   });
+
+  /* Otros dispositivos: polling cada 15s comparando fingerprint de datos */
+  setInterval(async () => {
+    if (document.hidden || _reloading) return;
+    try {
+      const [cfg, yrs, lch] = await Promise.all([
+        supa('timeline_config?select=*&id=eq.1'),
+        supa('timeline_years?select=*&order=year.asc'),
+        supa('timeline_launches?select=*&order=position.asc')
+      ]);
+      const fp = JSON.stringify([cfg, yrs, lch]);
+      if (_dataFP && fp !== _dataFP) {
+        _dataFP = fp;  /* actualizar antes para evitar doble disparo */
+        tlReload();
+      }
+    } catch(e) { /* silencioso — no interrumpir la experiencia */ }
+  }, 15000);
 
   /* ── A− / A+ font scale ── */
   const SCALE_STEP = 0.1, SCALE_MIN = 0.7, SCALE_MAX = 1.5;
