@@ -1345,7 +1345,7 @@ document.getElementById('btn-export-static').addEventListener('click', async () 
     /* 4b — Inyectar etiqueta "STATIC OFFLINE" debajo del badge */
     html = html.replace(
       'id="tl-badge"',
-      'id="tl-badge" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;"'
+      'id="tl-badge" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"'
     );
     /* Añadir el span STATIC OFFLINE como parte del interceptor: se inyecta vía script
        en DOMContentLoaded para no depender del formato exacto del HTML */
