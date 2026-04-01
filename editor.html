@@ -1179,8 +1179,8 @@ async function loadAll() {
   /* Guardar filtro activo actual — o restaurar el año visitado en el timeline */
   const currentPill = document.querySelector('#year-bar .ypill.active');
   let activeYrId = '';
-  if (currentPill) {
-    /* Re-render post-save: preservar la selección actual */
+  if (currentPill && currentPill.dataset.id) {
+    /* Re-render post-save con un año real seleccionado: preservar la selección */
     activeYrId = currentPill.dataset.id;
   } else {
     /* Primera carga: buscar el año por índice (más fiable), luego por año, luego por id */
