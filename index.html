@@ -826,7 +826,14 @@ let _dataFP   = '';   /* fingerprint para detectar cambios cross-device */
 /* ══════════════════════════════════════════
    RENDER
 ══════════════════════════════════════════ */
+let _renderAbort = null;  /* AbortController para limpiar listeners en cada re-render */
+
 function renderAll(YEARS) {
+  /* Cancelar todos los listeners del render anterior para evitar duplicados */
+  if (_renderAbort) _renderAbort.abort();
+  _renderAbort = new AbortController();
+  const signal = _renderAbort.signal;
+
   _hitoData = [];   /* reset para re-render limpio */
 
   /* Sincronizar con el año seleccionado en el editor (tl_yr_id = DB id del año) */
@@ -1039,7 +1046,7 @@ function renderAll(YEARS) {
     } else {
       aActivate(Math.min(aActive + 1, YEARS.length - 1));
     }
-  });
+  }, { signal });
 
   function fActivate(idx) {
     if (idx < 0 || idx >= YEARS.length || idx === fActive) return;
@@ -1100,7 +1107,7 @@ function renderAll(YEARS) {
       layoutSegs(aActive, false);
       posAccent(aActive);
     }
-  });
+  }, { signal });
 
   /* ── THEME — sincronizado con localStorage ── */
   let dark = localStorage.getItem('alq-theme') === 'dark';
@@ -1120,7 +1127,7 @@ function renderAll(YEARS) {
     dark = !dark;
     applyTheme(dark);
     localStorage.setItem('alq-theme', dark ? 'dark' : 'light');
-  });
+  }, { signal });
 
   /* ── LENGÜETA DE CONTROLES ── */
   const ctrlTab    = document.getElementById('ctrlTab');
@@ -1128,10 +1135,10 @@ function renderAll(YEARS) {
   ctrlHandle.addEventListener('click', e => {
     e.stopPropagation();
     ctrlTab.classList.toggle('open');
-  });
+  }, { signal });
   document.addEventListener('click', e => {
     if (!ctrlTab.contains(e.target)) ctrlTab.classList.remove('open');
-  });
+  }, { signal });
 
   /* ── BOTÓN FULLSCREEN ── */
   const fsBtn      = document.getElementById('fsToggle');
@@ -1151,10 +1158,10 @@ function renderAll(YEARS) {
     } else {
       (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el).catch(() => {});
     }
-  });
+  }, { signal });
 
-  document.addEventListener('fullscreenchange',       updateFsIcon);
-  document.addEventListener('webkitfullscreenchange', updateFsIcon);
+  document.addEventListener('fullscreenchange',       updateFsIcon, { signal });
+  document.addEventListener('webkitfullscreenchange', updateFsIcon, { signal });
 
   /* ── FULLSCREEN AUTOMÁTICO EN LANDSCAPE (móvil) ── */
   function tryFullscreen() {
@@ -1170,28 +1177,28 @@ function renderAll(YEARS) {
       }
     }
   }
-  window.addEventListener('orientationchange', () => setTimeout(tryFullscreen, 200));
-  screen.orientation?.addEventListener('change', () => setTimeout(tryFullscreen, 200));
+  window.addEventListener('orientationchange', () => setTimeout(tryFullscreen, 200), { signal });
+  screen.orientation?.addEventListener('change', () => setTimeout(tryFullscreen, 200), { signal });
 
   /* ── TOUCH ── */
   (function () {
     let tx = 0;
     const va = document.getElementById('va');
-    va.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    va.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true, signal });
     va.addEventListener('touchend',   e => {
       const dx = e.changedTouches[0].clientX - tx;
       if (Math.abs(dx) > 50) {
         if (dx < 0) aActivate(Math.min(aActive + 1, YEARS.length - 1));
         else        aActivate(Math.max(aActive - 1, 0));
       }
-    }, { passive: true });
+    }, { passive: true, signal });
   })();
 
   /* ── KEYBOARD ── */
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') curV==='accordion' ? aActivate(Math.min(aActive+1,YEARS.length-1)) : fActivate(fActive+1);
     if (e.key === 'ArrowLeft')  curV==='accordion' ? aActivate(Math.max(aActive-1,0))               : fActivate(fActive-1);
-  });
+  }, { signal });
 
   /* ── INIT — restaurar vista y año guardados ── */
   if (_curV === 'fichas') {
@@ -1212,7 +1219,7 @@ function renderAll(YEARS) {
   layoutSegs(aActive, false);
   posAccent(aActive);
   updateFcProg();
-  window.addEventListener('resize', () => { layoutSegs(aActive, false); posAccent(aActive); updateFcProg(); });
+  window.addEventListener('resize', () => { layoutSegs(aActive, false); posAccent(aActive); updateFcProg(); }, { signal });
 }
 
 /* ══════════════════════════════════════════
