@@ -320,6 +320,7 @@ html.dark #loading {
   position:fixed; z-index:300; display:none;
   background:var(--bg); border:1.5px solid var(--g20);
   padding:11px 15px; width:240px;
+  max-height:65vh; overflow-y:auto;
   box-shadow:0 6px 28px rgba(0,0,0,.18);
   opacity:0; transform:translateY(8px);   /* default: entra desde abajo (arriba) */
   transition:opacity .22s cubic-bezier(.4,0,.2,1),
@@ -847,7 +848,7 @@ function showHitoPopup(hito, clickY) {
   popup.innerHTML =
     (tagHtml ? `<div class="hp-tag">${tagHtml}</div>` : '') +
     `<div class="hp-name">${d.n}</div>` +
-    (d.d ? `<div class="hp-det">${d.d}</div>` : '') +
+    (d.d ? `<div class="hp-det">${d.d.split(' · ').join('<br>')}</div>` : '') +
     (subParts.length ? `<div class="hp-sub">${subParts.join(' · ')}</div>` : '');
 
   const isBelow = !!hito.closest('.row-below');
@@ -867,6 +868,17 @@ function showHitoPopup(hito, clickY) {
     popup.style.bottom = (window.innerHeight - clickY + 10) + 'px';
     popup.style.top    = 'auto';
   }
+
+  /* Clamp vertical: evitar que se salga de la ventana */
+  const pr = popup.getBoundingClientRect();
+  if (pr.top < 8) {
+    popup.style.bottom = 'auto';
+    popup.style.top = '8px';
+  } else if (pr.bottom > window.innerHeight - 8) {
+    popup.style.top  = 'auto';
+    popup.style.bottom = '8px';
+  }
+
   popup.offsetHeight;               /* forzar reflow para que la transición se dispare */
   popup.classList.add('hp-vis');
   _activeHito = hito;
@@ -1298,10 +1310,9 @@ function renderAll(YEARS) {
     if (_activeHito) hideHitoPopup();
   }, { signal });
 
-  /* Click fuera del popup lo cierra */
-  document.addEventListener('click', e => {
-    const popup = document.getElementById('hito-popup');
-    if (_activeHito && popup && !popup.contains(e.target)) hideHitoPopup();
+  /* Cualquier click cierra el popup — incluso si tapa el hito */
+  document.addEventListener('click', () => {
+    if (_activeHito) hideHitoPopup();
   }, { signal });
 }
 
