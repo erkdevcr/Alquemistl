@@ -828,12 +828,11 @@ let _aActive = parseInt(localStorage.getItem('tl_yr_a') || '0', 10);
 let _fActive = parseInt(localStorage.getItem('tl_yr_f') || '0', 10);
 let _curV    = localStorage.getItem('tl_view') || 'accordion';
 let _hitoData   = [];   /* datos de hitos para popup — se reconstruye en cada renderAll */
-let _activeHito = null;
+let _activeHito   = null;
+let _switchTimer  = null;   /* timer del cierre-antes-de-abrir */
 
-/* ── Popup helpers (module-scope para ser accesibles desde renderAll) ── */
-function showHitoPopup(hito, clickY) {
-  const popup = document.getElementById('hito-popup');
-  if (!popup) return;
+/* ── Abre el popup con animación de entrada (siempre desde cerrado) ── */
+function _openPopup(popup, hito, clickY) {
   const d = _hitoData[parseInt(hito.dataset.hi, 10)];
   if (!d) return;
 
@@ -854,6 +853,8 @@ function showHitoPopup(hito, clickY) {
   const isBelow = !!hito.closest('.row-below');
   popup.style.display = 'block';
   popup.classList.remove('hp-vis', 'hp-down');
+  if (isBelow) popup.classList.add('hp-down');
+
   const rect = hito.getBoundingClientRect();
   const pw   = 240;
   let left   = rect.left + rect.width / 2 - pw / 2;
@@ -861,7 +862,6 @@ function showHitoPopup(hito, clickY) {
   popup.style.left = left + 'px';
 
   if (isBelow) {
-    popup.classList.add('hp-down');
     popup.style.top    = (clickY + 10) + 'px';
     popup.style.bottom = 'auto';
   } else {
@@ -873,20 +873,44 @@ function showHitoPopup(hito, clickY) {
   const pr = popup.getBoundingClientRect();
   if (pr.top < 8) {
     popup.style.bottom = 'auto';
-    popup.style.top = '8px';
+    popup.style.top    = '8px';
   } else if (pr.bottom > window.innerHeight - 8) {
-    popup.style.top  = 'auto';
+    popup.style.top    = 'auto';
     popup.style.bottom = '8px';
   }
 
-  popup.offsetHeight;               /* forzar reflow para que la transición se dispare */
+  popup.offsetHeight;             /* forzar reflow para que la transición se dispare */
   popup.classList.add('hp-vis');
   _activeHito = hito;
+}
+
+/* ── Popup helpers (module-scope para ser accesibles desde renderAll) ── */
+function showHitoPopup(hito, clickY) {
+  const popup = document.getElementById('hito-popup');
+  if (!popup) return;
+
+  /* Si el popup está abierto O está en medio del cierre animado:
+     cancelar el timer pendiente, iniciar fade-out y encolar la apertura del nuevo */
+  if (_activeHito !== null || _switchTimer !== null) {
+    if (_switchTimer) { clearTimeout(_switchTimer); _switchTimer = null; }
+    popup.classList.remove('hp-vis');
+    _activeHito = null;
+    _switchTimer = setTimeout(() => {
+      _switchTimer = null;
+      popup.style.display = 'none';
+      _openPopup(popup, hito, clickY);
+    }, 250);   /* debe ser >= duración de la transición de cierre (~240ms) */
+    return;
+  }
+
+  /* Popup cerrado normalmente: abrir directo con animación */
+  _openPopup(popup, hito, clickY);
 }
 
 function hideHitoPopup() {
   const popup = document.getElementById('hito-popup');
   if (!popup) return;
+  if (_switchTimer) { clearTimeout(_switchTimer); _switchTimer = null; }
   popup.classList.remove('hp-vis');
   setTimeout(() => { if (!popup.classList.contains('hp-vis')) popup.style.display = 'none'; }, 260);
   _activeHito = null;

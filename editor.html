@@ -58,7 +58,7 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 /* ── TABS ── */
 .tabs{display:flex;gap:0;border-bottom:2px solid var(--g20);margin-bottom:24px;}
 .tab{
-  padding:8px 20px;font-size:11px;font-weight:600;letter-spacing:.1em;
+  padding:8px 20px;font-size:13px;font-weight:600;letter-spacing:.1em;
   text-transform:uppercase;color:var(--g60);cursor:pointer;
   border-bottom:2px solid transparent;margin-bottom:-2px;
   transition:color .2s,border-color .2s;
@@ -67,7 +67,7 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 
 /* ── CARDS ── */
 .section-label{
-  font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  font-size:13px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
   color:var(--g60);margin-bottom:12px;
 }
 .card{
@@ -87,8 +87,8 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
   display:flex;align-items:baseline;gap:10px;
   min-width:0;flex:1;overflow:hidden;
 }
-.card-title{font-size:13px;font-weight:600;white-space:nowrap;}
-.card-meta{font-size:10px;color:var(--g60);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
+.card-title{font-size:15px;font-weight:600;white-space:nowrap;}
+.card-meta{font-size:12px;color:var(--g60);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
 /* en pantalla pequeña se permite apilar */
 @media(max-width:520px){
   .card-header > div:first-child{flex-wrap:wrap;gap:2px 6px;}
@@ -101,11 +101,11 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 .card.dragging{opacity:0.3;outline:2px dashed var(--accent);}
 .card.drag-over-top{border-top:2px solid var(--accent);}
 .card.drag-over-bot{border-bottom:2px solid var(--accent);}
-.btn-del-year{
+.btn-del-year,.btn-del{
   background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;
   color:var(--g40);display:flex;align-items:center;transition:color .15s,background .15s;
 }
-.btn-del-year:hover{color:#cc2200;background:rgba(204,34,0,.08);}
+.btn-del-year:hover,.btn-del:hover{color:#cc2200;background:rgba(204,34,0,.08);}
 .card-body{display:none;padding:16px;}
 .card-body.open{display:block;max-height:70vh;overflow-y:auto;}
 
@@ -370,7 +370,7 @@ input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--fg
 
   <!-- TAB: HITOS -->
   <div id="tab-launches">
-    <p style="font-size:11px;line-height:1.65;color:var(--g60);margin-bottom:10px;padding:8px 10px;background:var(--g10);border-left:2.5px solid var(--g20);">
+    <p style="font-size:13px;line-height:1.65;color:var(--g60);margin-bottom:10px;padding:8px 10px;background:var(--g10);border-left:2.5px solid var(--g20);">
       Los hitos sin mes asignado están al final de la lista y pueden reordenarse para definir su posición en el timeline — siempre quedarán al final del timeline.
     </p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -869,7 +869,12 @@ function renderLaunches(filterYearId = '', searchText = '') {
         </div>
         <div class="card-actions">
           ${dragHandle}
-          <button class="btn btn-danger btn-del" data-id="${l.id}" style="padding:4px 10px;font-size:9px;">Eliminar</button>
+          <button class="btn-del" data-id="${l.id}" title="Eliminar">
+            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 4h12M6 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M13 4l-.9 9.1a1 1 0 0 1-1 .9H4.9a1 1 0 0 1-1-.9L3 4"/>
+              <line x1="6.5" y1="7" x2="6.5" y2="11"/><line x1="9.5" y1="7" x2="9.5" y2="11"/>
+            </svg>
+          </button>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" style="color:var(--g40);transition:transform .2s" class="chevron"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
