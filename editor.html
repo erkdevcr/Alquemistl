@@ -1342,7 +1342,15 @@ document.getElementById('btn-export-static').addEventListener('click', async () 
       if (fabClose !== -1) html = html.slice(0, fabIdx) + html.slice(fabClose + 4);
     }
 
-    /* 4b — Inyectar etiqueta "STATIC OFFLINE" debajo del badge */
+    /* 4b — Eliminar el label "ONLINE" (solo aparece en la versión editable) */
+    const onlineSuffix = '>ONLINE</span>';
+    const onlinePos = html.indexOf(onlineSuffix);
+    if (onlinePos !== -1) {
+      const spanOpen = html.lastIndexOf('<span', onlinePos);
+      if (spanOpen !== -1) html = html.slice(0, spanOpen) + html.slice(onlinePos + onlineSuffix.length);
+    }
+
+    /* 4c — Inyectar etiqueta "STATIC OFFLINE" debajo del badge */
     html = html.replace(
       'id="tl-badge"',
       'id="tl-badge" style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"'
