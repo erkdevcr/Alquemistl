@@ -111,6 +111,7 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 
 /* ── FORM GRID ── */
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.form-grid-launch{grid-template-columns:repeat(3,1fr);}
 .form-group{display:flex;flex-direction:column;gap:4px;}
 .form-group.full{grid-column:1/-1;}
 label{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--g60);}
@@ -122,6 +123,7 @@ input,select,textarea{
 }
 input:focus,select:focus,textarea:focus{border-color:var(--fg);}
 textarea{resize:vertical;min-height:60px;}
+textarea.detail-tall{min-height:72px;}
 select{cursor:pointer;}
 
 /* ── TOGGLE ── */
@@ -870,7 +872,7 @@ function renderLaunches(filterYearId = '', searchText = '') {
         </div>
       </div>
       <div class="card-body" id="launch-body-${l.id}">
-        <div class="form-grid">
+        <div class="form-grid form-grid-launch">
           <div class="form-group">
             <label>Año</label>
             <select data-table="timeline_launches" data-id="${l.id}" data-field="year_id">
@@ -880,14 +882,6 @@ function renderLaunches(filterYearId = '', searchText = '') {
           <div class="form-group">
             <label>Nombre</label>
             <input type="text" value="${l.name||''}" data-table="timeline_launches" data-id="${l.id}" data-field="name">
-          </div>
-          <div class="form-group">
-            <label>Detalle</label>
-            <input type="text" value="${l.detail||''}" data-table="timeline_launches" data-id="${l.id}" data-field="detail">
-          </div>
-          <div class="form-group">
-            <label>Cantidad items</label>
-            <input type="number" value="${l.item_count||''}" data-table="timeline_launches" data-id="${l.id}" data-field="item_count">
           </div>
           <div class="form-group">
             <label>Mes de lanzamiento</label>
@@ -907,6 +901,14 @@ function renderLaunches(filterYearId = '', searchText = '') {
               <option value="upd" ${l.status_tag==='upd'?'selected':''}>${_tn.upd}</option>
               <option value="urg" ${l.is_urgent?'selected':''}>${_tn.urg}</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label>Cantidad items</label>
+            <input type="number" value="${l.item_count||''}" data-table="timeline_launches" data-id="${l.id}" data-field="item_count">
+          </div>
+          <div class="form-group full">
+            <label>Detalle</label>
+            <textarea class="detail-tall" data-table="timeline_launches" data-id="${l.id}" data-field="detail">${l.detail||''}</textarea>
           </div>
         </div>
       </div>`;
