@@ -89,8 +89,7 @@ body{font-family:var(--font);background:var(--g10);color:var(--fg);min-height:10
 }
 .card-title{font-size:15px;font-weight:600;white-space:nowrap;}
 .card-meta{font-size:12px;color:var(--g60);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
-.card-status-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;}
-.spill{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;white-space:nowrap;line-height:1.7;border:1px solid;}
+
 /* en pantalla pequeña se permite apilar */
 @media(max-width:520px){
   .card-header > div:first-child{flex-wrap:wrap;gap:2px 6px;}
@@ -883,23 +882,14 @@ function renderLaunches(filterYearId = '', searchText = '') {
     const card = document.createElement('div');
     card.className = 'card';
     card.dataset.launchId = l.id;
-    const statusRowHtml = (l.launch_status || l.region) ? `
-      <div class="card-status-row">
-        ${statusPill(l.launch_status, STATUS_COLORS, 'Status')}
-        ${statusPill(l.region, REGION_COLORS, 'Región')}
-      </div>` : '';
-
     card.innerHTML = `
       <div class="card-header" data-id="${l.id}">
-        <div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;overflow:hidden;">
-          <div style="display:flex;align-items:baseline;gap:10px;min-width:0;overflow:hidden;">
-            <div class="card-title">
-              <span class="year-pill">${y ? y.year : '?'}</span>
-              &nbsp;${l.name}${tagBadge(l)}
-            </div>
-            <div class="card-meta">${metaHtml}</div>
+        <div>
+          <div class="card-title">
+            <span class="year-pill">${y ? y.year : '?'}</span>
+            &nbsp;${l.name}${tagBadge(l)}
           </div>
-          ${statusRowHtml}
+          <div class="card-meta">${metaHtml}</div>
         </div>
         <div class="card-actions">
           ${dragHandle}
@@ -934,32 +924,30 @@ function renderLaunches(filterYearId = '', searchText = '') {
                 }</option>`).join('')}
             </select>
           </div>
-          <div class="form-group">
-            <label>Tag</label>
-            <select data-table="timeline_launches" data-id="${l.id}" data-field="status_tag">
-              <option value="" ${!l.status_tag && !l.is_urgent?'selected':''}>Sin tag</option>
-              <option value="new" ${l.status_tag==='new'?'selected':''}>${_tn.new}</option>
-              <option value="upd" ${l.status_tag==='upd'?'selected':''}>${_tn.upd}</option>
-              <option value="urg" ${l.is_urgent?'selected':''}>${_tn.urg}</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Cantidad items</label>
-            <input type="number" value="${l.item_count||''}" data-table="timeline_launches" data-id="${l.id}" data-field="item_count">
-          </div>
-          <div class="form-group">
-            <label>Status</label>
-            <select data-table="timeline_launches" data-id="${l.id}" data-field="launch_status">
-              <option value="" ${!l.launch_status?'selected':''}>Sin status</option>
-              ${Object.keys(STATUS_COLORS).map(s=>`<option value="${s}" ${l.launch_status===s?'selected':''}>${s}</option>`).join('')}
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Región</label>
-            <select data-table="timeline_launches" data-id="${l.id}" data-field="region">
-              <option value="" ${!l.region?'selected':''}>Sin región</option>
-              ${Object.keys(REGION_COLORS).map(r=>`<option value="${r}" ${l.region===r?'selected':''}>${r}</option>`).join('')}
-            </select>
+          <div class="form-group full" style="padding:0;">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+              <div class="form-group">
+                <label>Tag</label>
+                <select data-table="timeline_launches" data-id="${l.id}" data-field="status_tag">
+                  <option value="" ${!l.status_tag && !l.is_urgent?'selected':''}>Sin tag</option>
+                  <option value="new" ${l.status_tag==='new'?'selected':''}>${_tn.new}</option>
+                  <option value="upd" ${l.status_tag==='upd'?'selected':''}>${_tn.upd}</option>
+                  <option value="urg" ${l.is_urgent?'selected':''}>${_tn.urg}</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Cantidad items</label>
+                <input type="number" value="${l.item_count||''}" data-table="timeline_launches" data-id="${l.id}" data-field="item_count">
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <input type="text" value="${l.launch_status||''}" placeholder="Ej: Por Activar" data-table="timeline_launches" data-id="${l.id}" data-field="launch_status">
+              </div>
+              <div class="form-group">
+                <label>Región</label>
+                <input type="text" value="${l.region||''}" placeholder="Ej: Por definir" data-table="timeline_launches" data-id="${l.id}" data-field="region">
+              </div>
+            </div>
           </div>
           <div class="form-group full">
             <label>Detalle</label>
@@ -1054,18 +1042,6 @@ function renderLaunches(filterYearId = '', searchText = '') {
               const datePart  = launchObj.launch_date
                 ? `<strong>${fmtDate(launchObj.launch_date)}</strong>` : '';
               meta.innerHTML  = [itemsPart, datePart].filter(Boolean).join(' · ');
-            }
-          } else if (field === 'launch_status' || field === 'region') {
-            launchObj[field] = val || null;
-            let row = card.querySelector('.card-status-row');
-            const newHtml = statusPill(launchObj.launch_status, STATUS_COLORS, 'Status') +
-                            statusPill(launchObj.region,         REGION_COLORS, 'Región');
-            if (row) {
-              row.innerHTML = newHtml;
-              if (!newHtml) row.remove();
-            } else if (newHtml) {
-              const headerLeft = card.querySelector('.card-header > div');
-              if (headerLeft) headerLeft.insertAdjacentHTML('beforeend', `<div class="card-status-row">${newHtml}</div>`);
             }
           }
         }

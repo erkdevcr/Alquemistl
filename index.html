@@ -332,10 +332,11 @@ html.dark #hito-popup { box-shadow:0 6px 28px rgba(0,0,0,.5); }
 .hp-tag  { margin-bottom:6px; }
 .hp-name { font-size:clamp(10px,1.05vw,19px); font-weight:600; color:var(--fg); line-height:1.3; margin-bottom:4px; }
 .hp-det  { font-size:clamp(8px,.9vw,16px); font-weight:400; color:var(--g60); line-height:1.4; margin-bottom:5px; }
-.hp-sub  { font-size:clamp(7px,.8vw,14px); color:var(--g40); font-weight:500; }
-.hp-status-row { display:flex; gap:5px; flex-wrap:wrap; margin:4px 0 5px; }
-.fc-status-row { display:flex; gap:5px; flex-wrap:wrap; margin:3px 0 4px; }
-.spill { display:inline-flex; align-items:center; gap:3px; font-size:calc(clamp(7px,.78vw,14px)*var(--tl-fscale)); font-weight:500; padding:1px 7px; border-radius:20px; white-space:nowrap; line-height:1.7; border:1px solid; }
+.hp-sub  { font-size:clamp(7px,.8vw,14px); color:var(--g40); font-weight:500; margin-bottom:5px; }
+.hp-status-row { display:flex; gap:1px 10px; flex-wrap:wrap; margin:3px 0 4px; line-height:1.2; }
+.fc-status-row { display:flex; gap:1px 10px; flex-wrap:wrap; margin:2px 0 3px; line-height:1.2; }
+.fc-status-row .spill { font-size:calc(clamp(8px,.9vw,16px)*var(--tl-fscale)); }
+.spill { display:inline; font-size:calc(clamp(7px,.78vw,14px)*var(--tl-fscale)); font-weight:500; white-space:nowrap; }
 
 .hlabel { font-size:clamp(9px,1.11vw,24px); font-weight:500; color:var(--fg); line-height:1.4; text-align:center; white-space:nowrap; }
 .hline-tag  { font-size:calc(clamp(6px,.7vw,16px)   * var(--tl-fscale)); font-weight:700; display:flex; justify-content:center; white-space:nowrap; }
@@ -439,7 +440,7 @@ html.dark #hito-popup { box-shadow:0 6px 28px rgba(0,0,0,.5); }
 .fc-card-tag .tag { margin-left:0; font-size:calc(clamp(8px,.9vw,18px) * var(--tl-fscale)); padding:2px 7px; }
 .fc-card-name   { font-size:calc(clamp(10px,1.28vw,28px) * var(--tl-fscale)); font-weight:600; color:var(--fg); line-height:1.35; margin-bottom:3px; }
 .fc-card-detail { font-size:calc(clamp(9px,1.05vw,23px)  * var(--tl-fscale)); color:var(--g60); font-weight:400; line-height:1.4; margin-bottom:4px; }
-.fc-card-sub    { font-size:calc(clamp(7px,.93vw,20px)   * var(--tl-fscale)); color:var(--g40); font-weight:500; }
+.fc-card-sub    { font-size:calc(clamp(7px,.93vw,20px)   * var(--tl-fscale)); color:var(--g40); font-weight:500; margin-bottom:5px; }
 
 /* ══════════════════════════════════════════
    FOOTER
@@ -743,23 +744,10 @@ function fmtDate(dateStr) {
 }
 
 /* ── Status / Región ── */
-const STATUS_COLORS = {
-  'Por Activar':   '#fdab3d', 'Activo':           '#00c875',
-  'Pausado':       '#757575', 'En producción':    '#037f4c',
-  'PT entregado':  '#401694', 'PILOTO CR':        '#74afcc',
-  'PILOTO GUATEMALA':'#579bfc','PILOTO NICARAGUA': '#cab641',
-  'Piloto CR + USA':'#ff5ac4','CANCELADO':        '#bb3354',
-};
-const REGION_COLORS = {
-  'Definido Lanzamiento en región':'#fdab3d',
-  'Listo':'#00c875', 'Estancado':'#df2f4a',
-  'Por definir':'#007eb5',
-  'Esperando revisión/aprobación':'#579bfc',
-};
-function statusPill(val, map, label) {
+
+function statusPill(val, color, label) {
   if (!val) return '';
-  const c = map[val] || '#888';
-  return `<span class="spill" style="color:${c};border-color:${c}55;background:${c}18"><span style="width:6px;height:6px;border-radius:50%;background:${c};display:inline-block;flex-shrink:0"></span>${label}: ${val}</span>`;
+  return `<span class="spill" style="color:${color}">${label}: ${val}</span>`;
 }
 
 /* Construye el sub-label del hito: items + fecha si existen */
@@ -878,15 +866,15 @@ function _openPopup(popup, hito, clickY) {
   if (d.date)  subParts.push(d.date);
 
   const statusRowHtml = (d.st || d.reg)
-    ? `<div class="hp-status-row">${statusPill(d.st,STATUS_COLORS,'Status')}${statusPill(d.reg,REGION_COLORS,'Región')}</div>`
+    ? `<div class="hp-status-row">${statusPill(d.st,'#00b87a','Status')}${statusPill(d.reg,'#579bfc','Región')}</div>`
     : '';
 
   popup.innerHTML =
     (tagHtml ? `<div class="hp-tag">${tagHtml}</div>` : '') +
     `<div class="hp-name">${d.n}</div>` +
-    statusRowHtml +
+    (subParts.length ? `<div class="hp-sub">${subParts.join(' · ')}</div>` : '') +
     (d.d ? `<div class="hp-det">${d.d.replace(/ · /g,'\n').split('\n').filter(Boolean).join('<br>')}</div>` : '') +
-    (subParts.length ? `<div class="hp-sub">${subParts.join(' · ')}</div>` : '');
+    statusRowHtml;
 
   const isBelow = !!hito.closest('.row-below');
   popup.style.display = 'block';
@@ -1071,15 +1059,15 @@ function renderAll(YEARS) {
         ? `<span class="tag tag-urg"${tagStyle('urg')}>${TM.urg}</span>`
         : (l.tag ? `<span class="tag tag-${l.tag}"${tagStyle(l.tag)}>${TM[l.tag]}</span>` : '');
       const fcStatusHtml = (l.st || l.reg)
-        ? `<div class="fc-status-row">${statusPill(l.st,STATUS_COLORS,'Status')}${statusPill(l.reg,REGION_COLORS,'Región')}</div>`
+        ? `<div class="fc-status-row">${statusPill(l.st,'#00b87a','Status')}${statusPill(l.reg,'#579bfc','Región')}</div>`
         : '';
       return `
         <div class="fc-card">
           ${tagHtml?`<div class="fc-card-tag">${tagHtml}</div>`:''}
           <div class="fc-card-name">${l.n}</div>
-          ${fcStatusHtml}
-          ${l.d?`<div class="fc-card-detail">${l.d.replace(/ · /g,'\n').split('\n').filter(Boolean).join('<br>')}</div>`:''}
           ${l.sub?`<div class="fc-card-sub">${l.sub}</div>`:''}
+          ${l.d?`<div class="fc-card-detail">${l.d.replace(/ · /g,'\n').split('\n').filter(Boolean).join('<br>')}</div>`:''}
+          ${fcStatusHtml}
         </div>`;
     }).join('');
 
